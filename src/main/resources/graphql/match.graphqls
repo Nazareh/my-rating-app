@@ -1,0 +1,57 @@
+type Mutation {
+    postMatch(input: MatchInput!): Match!
+}
+
+type Query {
+    myMatches: [Match!]!
+}
+
+scalar LocalDateTime
+
+input MatchInput {
+    team1: TeamInput!
+    team2: TeamInput!
+    startTime: LocalDateTime!
+    setsPlayed: [SetInput!]!
+}
+
+input SetInput {
+    team1Score: Int!
+    team2Score: Int!
+}
+
+
+input TeamInput {
+    player1: ID!
+    player2: ID!
+}
+
+type MatchPlayer {
+    id: ID!
+    name: String!
+    matchStatus: MatchStatus!
+}
+
+type Set {
+    team1Score: Int!
+    team2Score: Int!
+}
+
+type Team {
+    player1: MatchPlayer!
+    player2: MatchPlayer!
+}
+
+type Match {
+    id: ID!
+    team1: Team!
+    team2: Team!
+    setsPlayed: [Set!]!
+    startTime: LocalDateTime!
+}
+
+enum MatchStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}

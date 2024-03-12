@@ -1,0 +1,7 @@
+spring:
+  graphql:
+    schema:
+      inspection:
+        enabled: true
+    graphiql:
+        enabled: true
