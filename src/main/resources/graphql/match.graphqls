@@ -1,9 +1,9 @@
 type Mutation {
-    postMatch(input: MatchInput!): Match!
+    postMatch(input: MatchInput!): Boolean!
 }
 
 type Query {
-    myMatches: [Match!]!
+    myMatches: [MatchResponse!]!
 }
 
 scalar LocalDateTime
@@ -42,7 +42,7 @@ type Team {
     player2: MatchPlayer!
 }
 
-type Match {
+type MatchResponse {
     id: ID!
     team1: Team!
     team2: Team!

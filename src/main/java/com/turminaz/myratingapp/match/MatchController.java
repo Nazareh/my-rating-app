@@ -1,12 +1,11 @@
-package com.turminaz.myratingapp.Match;
+package com.turminaz.myratingapp.match;
 
-import com.netflix.dgs.codegen.generated.types.Match;
+import com.netflix.dgs.codegen.generated.types.MatchResponse;
 import com.netflix.dgs.codegen.generated.types.MatchInput;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
-import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -17,8 +16,9 @@ public class MatchController {
     private final MatchService matchService;
 
     @MutationMapping
-    public Match postMatch(@Argument MatchInput input) {
+    public Boolean postMatch(@Argument MatchInput input) {
+        matchService.createMatch(input);
 
-        return matchService.createMatch(input);
+        return true;
     }
 }
