@@ -11,14 +11,12 @@ import org.springframework.stereotype.Controller;
 @Controller
 @RequiredArgsConstructor
 @Slf4j
-public class MatchController {
+class MatchController {
 
     private final MatchService matchService;
 
     @MutationMapping
-    public Boolean postMatch(@Argument MatchInput input) {
-        matchService.createMatch(input);
-
-        return true;
+    MatchResponse postMatch(@Argument MatchInput input) {
+        return matchService.createMatch(input);
     }
 }

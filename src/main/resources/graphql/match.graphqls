@@ -1,5 +1,5 @@
 type Mutation {
-    postMatch(input: MatchInput!): Boolean!
+    postMatch(input: MatchInput!): MatchResponse!
 }
 
 type Query {
@@ -22,14 +22,14 @@ input SetInput {
 
 
 input TeamInput {
-    player1: ID!
-    player2: ID!
+    matchPlayer1: ID!
+    matchPlayer2: ID!
 }
 
 type MatchPlayer {
     id: ID!
     name: String!
-    matchStatus: MatchStatus!
+    status: MatchStatus!
 }
 
 type Set {
@@ -38,8 +38,8 @@ type Set {
 }
 
 type Team {
-    player1: MatchPlayer!
-    player2: MatchPlayer!
+    matchPlayer1: MatchPlayer!
+    matchPlayer2: MatchPlayer!
 }
 
 type MatchResponse {

@@ -5,3 +5,6 @@ spring:
         enabled: true
     graphiql:
         enabled: true
+  data:
+    mongodb:
+      database: myrating

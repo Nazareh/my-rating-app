@@ -1,12 +1,12 @@
 package com.turminaz.myratingapp.match;
 
-import com.turminaz.myratingapp.match.domain.Match;
+import com.turminaz.myratingapp.events.PlayerEvent;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MatchReceiver {
+class PlayerReceiver {
 
-    public void handleMessage(Match message) {
+    void handleMessage(PlayerEvent message) {
         System.out.println("Received <" + message.id() + ">");
     }
 }

@@ -1,9 +1,7 @@
 package com.turminaz.myratingapp.match;
 
 import com.netflix.dgs.codegen.generated.types.MatchInput;
-import com.netflix.dgs.codegen.generated.types.MatchStatus;
-import com.turminaz.myratingapp.config.RabbitConfig;
-import com.turminaz.myratingapp.match.domain.Match;
+import com.netflix.dgs.codegen.generated.types.MatchResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -14,33 +12,28 @@ import java.util.UUID;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class MatchService {
+class MatchService {
 
-    private final MatchMapper matchMapper;
+    private final MatchMapper mapper;
     private final RabbitTemplate rabbitTemplate;
 
-    public void createMatch(MatchInput input) {
+    MatchResponse createMatch(MatchInput input) {
         log.info("Creating match: {}", input);
-        var mappedMatch = matchMapper.toMatch(input);
 
-        var matchId = UUID.randomUUID();
-        mappedMatch.setId(matchId.toString());
+        var player1 = findPlayerById(input.getTeam1().getMatchPlayer1());
+        var player2 = findPlayerById(input.getTeam1().getMatchPlayer2());
+        var player3 = findPlayerById(input.getTeam2().getMatchPlayer1());
+        var player4 = findPlayerById(input.getTeam2().getMatchPlayer2());
 
-        mappedMatch.getTeam1().getPlayer1().setName("Team 1 Player 1");
-        mappedMatch.getTeam1().getPlayer1().setMatchStatus(MatchStatus.APPROVED);
-        mappedMatch.getTeam1().getPlayer2().setMatchStatus(MatchStatus.PENDING);
-        mappedMatch.getTeam1().getPlayer2().setName("Team 1 Player 2");
-        mappedMatch.getTeam2().getPlayer1().setMatchStatus(MatchStatus.PENDING);
-        mappedMatch.getTeam2().getPlayer1().setName("Team 2 Player 1");
-        mappedMatch.getTeam2().getPlayer2().setMatchStatus(MatchStatus.PENDING);
-        mappedMatch.getTeam2().getPlayer2().setName("Team 2 Player 2");
+        var savedMatch = mapper.toMatch(UUID.randomUUID().toString(), input, player1, player2, player3, player4);
 
-        log.info("Sending match {}", mappedMatch.getId());
+        rabbitTemplate.convertAndSend(MatchRabbitConfig.MATCH_EXCHANGE, MatchRabbitConfig.MATCH_QUEUE, savedMatch);
 
-        rabbitTemplate
-                .convertAndSend(RabbitConfig.MATCH_EXCHANGE,
-                        "match.created",
-                        new Match(matchId, mappedMatch.getStartTime()));
-
+        return mapper.toMatchResponse(savedMatch);
     }
+
+    MatchPlayer findPlayerById(String id){
+        return new MatchPlayer(id, "Player", MatchStatus.PENDING);
+    }
+
 }

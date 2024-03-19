@@ -1,4 +1,4 @@
-package com.turminaz.myratingapp.config;
+package com.turminaz.myratingapp.match;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -12,11 +12,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class RabbitConfig {
+class MatchRabbitConfig {
 
-    public static final String MATCH_EXCHANGE = "spring-boot-exchange";
+    static final String MATCH_EXCHANGE = "match-exchange";
 
-    public static final String MATCH_QUEUE = "spring-boot";
+    static final String MATCH_QUEUE = "match-queue";
 
     @Bean
     Queue queue() {
@@ -34,6 +34,13 @@ public class RabbitConfig {
     }
 
     @Bean
+    public SimpleMessageConverter converter() {
+        SimpleMessageConverter converter = new SimpleMessageConverter();
+        converter.addAllowedListPatterns("com.turminaz.myratingapp.*", "java.util.*", "java.time.*", "org.bson.types.ObjectId");
+        return converter;
+    }
+
+    @Bean
     SimpleMessageListenerContainer container(ConnectionFactory connectionFactory,
                                              MessageListenerAdapter listenerAdapter) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
@@ -44,11 +51,9 @@ public class RabbitConfig {
     }
 
     @Bean
-    public SimpleMessageConverter converter() {
-        SimpleMessageConverter converter = new SimpleMessageConverter();
-        converter.addAllowedListPatterns("com.turminaz.myratingapp.*", "java.util.*", "java.time.*");
-        return converter;
+    MessageListenerAdapter playerListenerAdapter(PlayerReceiver receiver, SimpleMessageConverter converter) {
+        var adapter = new MessageListenerAdapter(receiver);
+        adapter.setMessageConverter(converter);
+        return adapter;
     }
-
-
 }
