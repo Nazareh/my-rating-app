@@ -38,9 +38,10 @@ dependencies {
 	implementation platform("com.google.cloud:spring-cloud-gcp-dependencies:5.1.0")
 	implementation("com.google.cloud:spring-cloud-gcp-starter-data-firestore")
 	implementation 'com.google.firebase:firebase-admin:9.2.0'
-	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework:spring-webflux'
