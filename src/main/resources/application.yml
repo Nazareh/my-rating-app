@@ -8,3 +8,13 @@ spring:
   data:
     mongodb:
       database: myrating
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
+
+app:
+  gcp:
+    firebase:
+      service-account: classpath:my-rating-app-auth-firebase-adminsdk-uipee-b194862454.json

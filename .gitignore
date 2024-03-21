@@ -82,3 +82,8 @@ nb-configuration.xml
 ## OS X
 ##############################
 .DS_Store
+
+##############################
+## Firebase
+src/main/resources/my-rating-app-auth-firebase-adminsdk-uipee-b194862454.json
+##############################

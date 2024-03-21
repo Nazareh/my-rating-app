@@ -2,8 +2,10 @@ package com.turminaz.myratingapp.match;
 
 import com.netflix.dgs.codegen.generated.types.MatchInput;
 import com.netflix.dgs.codegen.generated.types.MatchResponse;
+import com.turminaz.myratingapp.model.Player;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
@@ -14,10 +16,8 @@ interface MatchMapper {
 
     MatchResponse toMatchResponse(Match match);
 
-    default com.netflix.dgs.codegen.generated.types.MatchPlayer map(String value){
-        return com.netflix.dgs.codegen.generated.types.MatchPlayer.newBuilder().id(value)
-                .build();
-    }
+    @Mapping(source = "player.displayName", target = "name")
+    MatchPlayer toMatchPlayer(Player player,MatchStatus status );
 
     default Match toMatch(String id, MatchInput input, MatchPlayer matchPlayer1, MatchPlayer matchPlayer2, MatchPlayer matchPlayer3, MatchPlayer matchPlayer4) {
         return new Match(id, input.getStartTime(),

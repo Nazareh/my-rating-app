@@ -26,31 +26,31 @@ input TeamInput {
     matchPlayer2: ID!
 }
 
-type MatchPlayer {
+type MatchPlayerResponse {
     id: ID!
     name: String!
-    status: MatchStatus!
+    status: MatchStatusEnum!
 }
 
-type Set {
+type SetResponse {
     team1Score: Int!
     team2Score: Int!
 }
 
-type Team {
-    matchPlayer1: MatchPlayer!
-    matchPlayer2: MatchPlayer!
+type TeamResponse {
+    matchPlayer1: MatchPlayerResponse!
+    matchPlayer2: MatchPlayerResponse!
 }
 
 type MatchResponse {
     id: ID!
-    team1: Team!
-    team2: Team!
-    setsPlayed: [Set!]!
+    team1: TeamResponse!
+    team2: TeamResponse!
+    setsPlayed: [SetResponse!]!
     startTime: LocalDateTime!
 }
 
-enum MatchStatus {
+enum MatchStatusEnum {
     PENDING
     APPROVED
     REJECTED
