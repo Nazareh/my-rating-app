@@ -31,7 +31,7 @@ class MatchMapperTest {
                 .ignoringFields("name")
                 .isEqualTo(player);
 
-        assertThat(matchPlayer.name()).isEqualTo(player.displayName());
+        assertThat(matchPlayer.name()).isEqualTo(player.name());
         assertThat(matchPlayer.status()).isEqualTo(matchStatus);
 
     }

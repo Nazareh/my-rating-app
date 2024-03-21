@@ -1,5 +1,11 @@
 type Mutation {
     postMatch(input: MatchInput!): MatchResponse!
+    onboardMyself: PlayerResponse!
+}
+
+type PlayerResponse {
+    id: ID!
+    name: String!
 }
 
 type Query {

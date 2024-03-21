@@ -48,10 +48,8 @@ class MatchService {
 
     @NotNull
     private MatchPlayer getPlayerOrOnboardPlayer(String playerId, boolean isPrincipal) {
-        var player =  playerService.findById(playerId)
-                .orElseGet(() -> playerService.onboardPlayer(playerId));
-        return mapper.toMatchPlayer(player, isPrincipal ? MatchStatus.APPROVED : MatchStatus.PENDING);
-
+        return playerService.findById(playerId)
+                .map((p) -> mapper.toMatchPlayer(p, isPrincipal ? MatchStatus.APPROVED : MatchStatus.PENDING))
+                .orElseThrow();
     }
-
 }
