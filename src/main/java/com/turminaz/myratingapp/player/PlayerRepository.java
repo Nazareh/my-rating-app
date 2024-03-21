@@ -1,5 +1,6 @@
 package com.turminaz.myratingapp.player;
 
+import com.google.cloud.spring.data.firestore.FirestoreReactiveRepository;
 import com.turminaz.myratingapp.model.Player;
 import org.springframework.stereotype.Repository;
 
@@ -9,16 +10,4 @@ import java.util.Set;
 
 
 @Repository
-class PlayerRepository {
-
-    private final Set<Player> players = new HashSet<>();
-
-    Optional<Player> findById(String id){
-        return players.stream().filter(player -> player.id().equals(id)).findFirst();
-    };
-
-    Player save(Player player){
-        players.add(player);
-        return player;
-    };
-}
+interface PlayerRepository extends FirestoreReactiveRepository<Player> { }

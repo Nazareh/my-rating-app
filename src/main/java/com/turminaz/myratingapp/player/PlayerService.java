@@ -19,14 +19,13 @@ public class PlayerService {
     private final FirebaseAuth firebaseAuth;
 
     public Optional<Player> findById(String id) {
-        return repository.findById(id);
+        return repository.findById(id).blockOptional();
     }
     public PlayerResponse onboardPlayer(String id) throws FirebaseAuthException {
             firestore.listCollections().forEach((c) -> System.out.println(c.getId()));
             return mapper.toPlayerResponse(
                     repository.save(
-//                            new Player(id, "John Doe", "johndoe@gmail.com")
                             mapper.toPlayer(firebaseAuth.getUser(id))
-                    ));
+                    ).block());
     }
 }
