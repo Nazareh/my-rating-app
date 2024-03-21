@@ -27,6 +27,13 @@ class FirebaseConfig {
     @Bean
     FirebaseApp firebaseApp() throws IOException {
         FirebaseOptions options;
+        if (credentials == null) {
+            options = FirebaseOptions.builder()
+                    .setProjectId(projectId)
+                    .setCredentials(GoogleCredentials.getApplicationDefault())
+                    .build();
+            return FirebaseApp.initializeApp(options);
+        }
 
         try (InputStream is = credentials.getInputStream() ) {
             var credentials = GoogleCredentials.fromStream(is);
