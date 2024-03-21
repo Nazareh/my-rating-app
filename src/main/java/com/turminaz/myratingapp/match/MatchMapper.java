@@ -15,7 +15,6 @@ interface MatchMapper {
 
     MatchResponse toMatchResponse(Match match);
 
-//    @Mapping(source = "player.name", target = "name")
     MatchPlayer toMatchPlayer(Player player,MatchStatus status );
 
     default Match toMatch(String id, MatchInput input, MatchPlayer matchPlayer1, MatchPlayer matchPlayer2, MatchPlayer matchPlayer3, MatchPlayer matchPlayer4) {

@@ -28,10 +28,8 @@ class MatchMapperTest {
 
         assertThat(matchPlayer).usingRecursiveComparison()
                 .ignoringFieldsOfTypes(MatchStatus.class)
-                .ignoringFields("name")
                 .isEqualTo(player);
 
-        assertThat(matchPlayer.name()).isEqualTo(player.name());
         assertThat(matchPlayer.status()).isEqualTo(matchStatus);
 
     }
