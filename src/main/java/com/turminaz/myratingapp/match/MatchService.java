@@ -1,10 +1,7 @@
 package com.turminaz.myratingapp.match;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
 import com.netflix.dgs.codegen.generated.types.MatchInput;
 import com.netflix.dgs.codegen.generated.types.MatchResponse;
-import com.turminaz.myratingapp.model.Player;
 import com.turminaz.myratingapp.player.PlayerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +10,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service

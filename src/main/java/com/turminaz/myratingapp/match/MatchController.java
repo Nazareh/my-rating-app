@@ -1,8 +1,7 @@
 package com.turminaz.myratingapp.match;
 
-import com.google.firebase.auth.FirebaseAuthException;
-import com.netflix.dgs.codegen.generated.types.MatchResponse;
 import com.netflix.dgs.codegen.generated.types.MatchInput;
+import com.netflix.dgs.codegen.generated.types.MatchResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.graphql.data.method.annotation.Argument;

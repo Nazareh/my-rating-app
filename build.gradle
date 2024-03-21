@@ -34,8 +34,9 @@ dependencies {
 	implementation 'com.graphql-java:graphql-java-extended-scalars:19.0' // bump up as soon as netflix allows it
 	implementation("com.tailrocks.graphql:graphql-datetime-spring-boot-starter:6.0.0")
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	testImplementation 'uk.co.jemos.podam:podam:8.0.1.RELEASE'
 	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+	implementation platform("com.google.cloud:spring-cloud-gcp-dependencies:5.1.0")
+	implementation("com.google.cloud:spring-cloud-gcp-starter-data-firestore")
 	implementation 'com.google.firebase:firebase-admin:9.2.0'
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 	compileOnly 'org.projectlombok:lombok'
@@ -44,6 +45,7 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework:spring-webflux'
 	testImplementation 'org.springframework.graphql:spring-graphql-test'
+	testImplementation 'uk.co.jemos.podam:podam:8.0.1.RELEASE'
 
 }
 

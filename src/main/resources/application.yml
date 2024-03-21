@@ -1,4 +1,13 @@
 spring:
+  cloud:
+    gcp:
+      project-id: my-rating-app-auth
+      credentials:
+        location: classpath:my-rating-app-auth-firebase-adminsdk-uipee-b194862454.json
+#      firestore:
+#        project-id: my-rating-app-auth
+#        credentials:
+#          location: classpath:my-rating-app-auth-firebase-adminsdk-uipee-b194862454.json
   graphql:
     schema:
       inspection:
@@ -13,8 +22,3 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
-
-app:
-  gcp:
-    firebase:
-      service-account: classpath:my-rating-app-auth-firebase-adminsdk-uipee-b194862454.json

@@ -1,37 +1,32 @@
 package com.turminaz.myratingapp.player;
 
+import com.google.cloud.firestore.Firestore;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.UserRecord;
 import com.netflix.dgs.codegen.generated.types.PlayerResponse;
 import com.turminaz.myratingapp.model.Player;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class PlayerService {
     private final PlayerRepository repository;
-    private final FirebaseAuth firebaseAuth;
     private final PlayerMapper mapper;
+    private final Firestore firestore;
+    private final FirebaseAuth firebaseAuth;
 
     public Optional<Player> findById(String id) {
         return repository.findById(id);
     }
-    public PlayerResponse onboardPlayer(String id)  {
-        try {
+    public PlayerResponse onboardPlayer(String id) throws FirebaseAuthException {
+            firestore.listCollections().forEach((c) -> System.out.println(c.getId()));
             return mapper.toPlayerResponse(
                     repository.save(
-                            mapper.toPlayer(
-                                    firebaseAuth.getUser(id))));
-
-        } catch (FirebaseAuthException e) {
-            throw new RuntimeException(e);
-        }
+//                            new Player(id, "John Doe", "johndoe@gmail.com")
+                            mapper.toPlayer(firebaseAuth.getUser(id))
+                    ));
     }
 }
