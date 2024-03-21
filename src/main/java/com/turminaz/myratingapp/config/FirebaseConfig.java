@@ -21,11 +21,11 @@ import java.io.InputStream;
 @RequiredArgsConstructor
 class FirebaseConfig {
 
-    @Value("${spring.cloud.gcp.project-id}")
+    @Value("${spring.cloud.gcp.project-id:#{null}}")
     private String projectId;
 
     @Value("${spring.cloud.gcp.credentials.location:#{null}}")
-    private Resource credentials = null;
+    private Resource credentials;
 
     @Bean
     FirebaseApp firebaseApp() throws IOException {

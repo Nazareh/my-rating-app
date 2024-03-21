@@ -3,7 +3,7 @@ spring:
     gcp:
       project-id: my-rating-app-auth
       credentials:
-        location: classpath:123my-rating-app-auth-firebase-adminsdk-uipee-b194862454.json
+        location: classpath:my-rating-app-auth-firebase-adminsdk-uipee-b194862454.json
 #      firestore:
 #        project-id: my-rating-app-auth
 #        credentials:
