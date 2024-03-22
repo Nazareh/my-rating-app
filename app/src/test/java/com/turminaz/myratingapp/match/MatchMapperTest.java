@@ -9,7 +9,7 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MatchMapperTest {
-    PodamFactory podamFactory = new PodamFactoryImpl();
+    private final PodamFactory podamFactory = new PodamFactoryImpl();
     @Test
     void toMatchResponse() {
         var match = podamFactory.manufacturePojo(Match.class);

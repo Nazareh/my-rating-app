@@ -8,8 +8,6 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.stereotype.Controller;
 
-import java.security.Principal;
-
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -18,7 +16,7 @@ class MatchController {
     private final MatchService matchService;
 
     @MutationMapping
-    MatchResponse postMatch(@Argument MatchInput input, Principal principal)  {
-        return matchService.createMatch(input, principal);
+    MatchResponse postMatch(@Argument MatchInput input)  {
+        return matchService.createMatch(input);
     }
 }
