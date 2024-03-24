@@ -24,29 +24,14 @@ class FirebaseConfig {
     @Value("${spring.cloud.gcp.project-id:#{null}}")
     private String projectId;
 
-    @Value("${spring.cloud.gcp.credentials.location:#{null}}")
-    private Resource credentials;
-
     @Bean
     FirebaseApp firebaseApp() throws IOException {
         FirebaseOptions options;
-        if (credentials == null) {
             options = FirebaseOptions.builder()
                     .setProjectId(projectId)
                     .setCredentials(GoogleCredentials.getApplicationDefault())
                     .build();
             return FirebaseApp.initializeApp(options);
-        }
-
-        try (InputStream is = credentials.getInputStream() ) {
-            var credentials = GoogleCredentials.fromStream(is);
-
-            options = FirebaseOptions.builder()
-                    .setCredentials(credentials)
-                    .setProjectId(projectId)
-                    .build();
-        }
-        return FirebaseApp.initializeApp(options);
     }
     @Bean
     @ConditionalOnProperty(

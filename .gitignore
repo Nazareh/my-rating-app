@@ -88,3 +88,4 @@ nb-configuration.xml
 my-rating-app-auth-firebase-adminsdk-uipee-b194862454.json
 my-rating-app-auth-circle-ci.json
 ##############################
+/app/src/main/resources/encoded.sh
