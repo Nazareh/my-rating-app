@@ -1,0 +1,8 @@
+config:
+  gcp:project: my-rating-app-auth
+  gcp:region: australia-southeast1
+  my-rating-app-auth:appPath: app
+  my-rating-app-auth:concurrency: "50"
+  my-rating-app-auth:containerPort: "8080"
+  my-rating-app-auth:cpu: "1"
+  my-rating-app-auth:memory: 1Gi
