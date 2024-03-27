@@ -13,3 +13,6 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
+  rabbitmq:
+    host: host.docker.internal
+    port: 5672
