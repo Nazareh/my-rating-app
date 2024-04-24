@@ -9,7 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+
+import static com.turminaz.myratingapp.match.MatchUtils.areAllPlayersOnTeam;
+import static com.turminaz.myratingapp.match.MatchUtils.isAnyPlayerOnTeam;
 
 @Service
 @Slf4j
@@ -21,35 +27,85 @@ class MatchService {
     private final AuthenticationFacade authenticationFacade;
     private final MatchMapper mapper;
 
-    //    private final RabbitTemplate rabbitTemplate;
-
     MatchResponse createMatch(MatchInput input) {
-
-
         log.info("Creating match: {}", input);
 
+        getSetOfPlayers(input);
+
         var authenticatedUserId = authenticationFacade.authenticatedUserId();
-        var player1 = getPlayerOrOnboardPlayer(input.getTeam1().getMatchPlayer1(),
-                authenticatedUserId.equals(input.getTeam1().getMatchPlayer1()));
-        var player2 = getPlayerOrOnboardPlayer(input.getTeam1().getMatchPlayer2(),
-                authenticatedUserId.equals(input.getTeam1().getMatchPlayer2()));
-        var player3 = getPlayerOrOnboardPlayer(input.getTeam2().getMatchPlayer1(),
-                authenticatedUserId.equals(input.getTeam2().getMatchPlayer1()));
-        var player4 = getPlayerOrOnboardPlayer(input.getTeam2().getMatchPlayer2(),
-                authenticatedUserId.equals(input.getTeam2().getMatchPlayer2()));
+        var matches = repository.findAllByStartTime(input.getStartTime().toInstant()).collectList().block();
+        assert matches != null;
 
-        var savedMatch = repository.save
-                (mapper.toMatch(UUID.randomUUID().toString(), input, player1, player2, player3, player4)).block();
+        var existingMatch = findMatchWithAllPlayers(input, matches);
+        Match postedMatch = existingMatch.orElse(createNewMatch(input));
 
-//        rabbitTemplate.convertAndSend(MatchRabbitConfig.MATCH_EXCHANGE, MatchRabbitConfig.MATCH_QUEUE, savedMatch);
+        validateNoPlayerIsOnTwoMatches(input, matches, postedMatch);
 
+        if (postedMatch.getTeam1().getMatchPlayer1().getId().equals(authenticatedUserId))
+            postedMatch.getTeam1().getMatchPlayer1().setStatus(MatchStatus.APPROVED);
+        if (postedMatch.getTeam1().getMatchPlayer2().getId().equals(authenticatedUserId))
+            postedMatch.getTeam1().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
+        if (postedMatch.getTeam2().getMatchPlayer1().getId().equals(authenticatedUserId))
+            postedMatch.getTeam2().getMatchPlayer1().setStatus(MatchStatus.APPROVED);
+        if (postedMatch.getTeam2().getMatchPlayer2().getId().equals(authenticatedUserId))
+            postedMatch.getTeam2().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
+
+        var savedMatch = repository.save(postedMatch).block();
+//        rabbitTemplate.convertAndSend(MatchRabbitConfig.MATCH_EXCHANGE, MatchRabbitConfig.MATCH_QUEUE, match);
+        log.info("Match created: {}", savedMatch);
         return mapper.toMatchResponse(savedMatch);
     }
 
+    private void validateNoPlayerIsOnTwoMatches(MatchInput input, List<Match> matches, Match postedMatch) {
+        var playerSet = getSetOfPlayers(input);
+
+         if(matches.stream().filter(m -> !m.getId().equals(postedMatch.getId()))
+                        .anyMatch(m -> isAnyPlayerOnTeam(m.getTeam1(), playerSet) || isAnyPlayerOnTeam(m.getTeam2(), playerSet))) {
+             throw new RuntimeException("A player was found on another match during the same time");
+         };
+    }
+
+    private Set<String> getSetOfPlayers(MatchInput input) {
+        return Set.of(input.getTeam1().getMatchPlayer1(),
+                input.getTeam1().getMatchPlayer2(),
+                input.getTeam2().getMatchPlayer1(),
+                input.getTeam2().getMatchPlayer2());
+
+    }
+
     @NotNull
-    private MatchPlayer getPlayerOrOnboardPlayer(String playerId, boolean isPrincipal) {
-        return playerService.findById(playerId)
-                .map((p) -> mapper.toMatchPlayer(p, isPrincipal ? MatchStatus.APPROVED : MatchStatus.PENDING))
-                .orElseThrow();
+    private Match createNewMatch(MatchInput input) {
+        return mapper.toMatch(UUID.randomUUID().toString(), input,
+                getOrOnboardPlayer(input.getTeam1().getMatchPlayer1()),
+                getOrOnboardPlayer(input.getTeam1().getMatchPlayer2()),
+                getOrOnboardPlayer(input.getTeam2().getMatchPlayer1()),
+                getOrOnboardPlayer(input.getTeam2().getMatchPlayer2()));
+    }
+
+    private Optional<Match> findMatchWithAllPlayers(MatchInput input, List<Match> matches) {
+        var filteredMatched = matches.stream()
+                .filter(match ->
+                        (areAllPlayersOnTeam(match.getTeam1(), Set.of(input.getTeam1().getMatchPlayer1(), input.getTeam1().getMatchPlayer2())) &&
+                                areAllPlayersOnTeam(match.getTeam2(), Set.of(input.getTeam2().getMatchPlayer1(), input.getTeam2().getMatchPlayer2())))
+                                ||
+                                (areAllPlayersOnTeam(match.getTeam1(), Set.of(input.getTeam2().getMatchPlayer1(), input.getTeam2().getMatchPlayer2()))
+                                        && areAllPlayersOnTeam(match.getTeam2(), Set.of(input.getTeam1().getMatchPlayer1(), input.getTeam1().getMatchPlayer2()))))
+                .toList();
+
+        if (filteredMatched.size() > 1) {
+            throw new RuntimeException("Too many matches");
+        }
+
+        return filteredMatched.size() == 1 ? Optional.of(filteredMatched.getFirst()) : Optional.empty();
+
+
+
+    }
+
+    @NotNull
+    private MatchPlayer getOrOnboardPlayer(String playerId) {
+        return mapper.toMatchPlayer(
+                playerService.findById(playerId).orElseGet(() -> playerService.createPlayer(playerId)),
+                MatchStatus.PENDING);
     }
 }

@@ -1,6 +1,15 @@
 package com.turminaz.myratingapp.match;
 
-import java.io.Serializable;
 
-record SetPlayed(int team1Score, int team2Score) implements Serializable {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+class SetPlayed {
+    private int team1Score;
+    private int team2Score;
+
 }

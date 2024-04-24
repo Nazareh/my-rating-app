@@ -6,6 +6,10 @@ import org.junit.jupiter.api.Test;
 import uk.co.jemos.podam.api.PodamFactory;
 import uk.co.jemos.podam.api.PodamFactoryImpl;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MatchMapperTest {
@@ -16,7 +20,11 @@ class MatchMapperTest {
 
         var matchResponse = MatchMapper.INSTANCE.toMatchResponse(match);
 
-        assertThat(matchResponse).usingRecursiveComparison().isEqualTo(match);
+        assertThat(matchResponse).usingRecursiveComparison()
+                .ignoringFieldsOfTypes(OffsetDateTime.class)
+                .isEqualTo(match);
+
+        assertThat(matchResponse.getStartTime().toInstant()).isEqualTo(match.getStartTime());
     }
 
     @Test
@@ -30,7 +38,7 @@ class MatchMapperTest {
                 .ignoringFieldsOfTypes(MatchStatus.class)
                 .isEqualTo(player);
 
-        assertThat(matchPlayer.status()).isEqualTo(matchStatus);
+        assertThat(matchPlayer.getStatus()).isEqualTo(matchStatus);
 
     }
 
@@ -45,13 +53,13 @@ class MatchMapperTest {
 
         var match = MatchMapper.INSTANCE.toMatch(id, matchInput, matchPlayer1, matchPlayer2, matchPlayer3, matchPlayer4);
 
-        assertThat(match.id()).isEqualTo(id);
-        assertThat(match.startTime()).isEqualTo(matchInput.getStartTime());
-        assertThat(match.team1().matchPlayer1()).isEqualTo(matchPlayer1);
-        assertThat(match.team1().matchPlayer2()).isEqualTo(matchPlayer2);
-        assertThat(match.team2().matchPlayer1()).isEqualTo(matchPlayer3);
-        assertThat(match.team2().matchPlayer2()).isEqualTo(matchPlayer4);
-        assertThat(match.setsPlayed()).usingRecursiveComparison().isEqualTo(matchInput.getSetsPlayed());
+        assertThat(match.getId()).isEqualTo(id);
+        assertThat(match.getStartTime()).isEqualTo(matchInput.getStartTime().toInstant());
+        assertThat(match.getTeam1().getMatchPlayer1()).isEqualTo(matchPlayer1);
+        assertThat(match.getTeam1().getMatchPlayer2()).isEqualTo(matchPlayer2);
+        assertThat(match.getTeam2().getMatchPlayer1()).isEqualTo(matchPlayer3);
+        assertThat(match.getTeam2().getMatchPlayer2()).isEqualTo(matchPlayer4);
+        assertThat(match.getSetsPlayed()).usingRecursiveComparison().isEqualTo(matchInput.getSetsPlayed());
 
     }
 }

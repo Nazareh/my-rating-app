@@ -1,6 +1,13 @@
 package com.turminaz.myratingapp.match;
 
-import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-record Team(MatchPlayer matchPlayer1, MatchPlayer matchPlayer2) implements Serializable {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+class Team {
+    private MatchPlayer matchPlayer1;
+    private MatchPlayer matchPlayer2;
 }

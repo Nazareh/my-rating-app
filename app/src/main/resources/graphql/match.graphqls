@@ -12,12 +12,13 @@ type Query {
     myMatches: [MatchResponse!]!
 }
 
-scalar LocalDateTime
+#scalar LocalDateTime
+scalar DateTime
 
 input MatchInput {
     team1: TeamInput!
     team2: TeamInput!
-    startTime: LocalDateTime!
+    startTime: DateTime!
     setsPlayed: [SetInput!]!
 }
 
@@ -53,7 +54,7 @@ type MatchResponse {
     team1: TeamResponse!
     team2: TeamResponse!
     setsPlayed: [SetResponse!]!
-    startTime: LocalDateTime!
+    startTime: DateTime!
 }
 
 enum MatchStatusEnum {

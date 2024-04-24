@@ -43,7 +43,7 @@ out/
 *.iml
 *.ipr
 *.iws
-
+application-local.yml
 ##############################
 ## Eclipse
 ##############################
@@ -88,4 +88,5 @@ nb-configuration.xml
 my-rating-app-auth-firebase-adminsdk-uipee-b194862454.json
 my-rating-app-auth-circle-ci.json
 encoded.sh
+/credentials.json
 ##############################

@@ -1,6 +1,5 @@
 package com.turminaz.myratingapp.player;
 
-import com.google.cloud.firestore.Firestore;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.netflix.dgs.codegen.generated.types.PlayerResponse;
@@ -15,17 +14,20 @@ import java.util.Optional;
 public class PlayerService {
     private final PlayerRepository repository;
     private final PlayerMapper mapper;
-    private final Firestore firestore;
     private final FirebaseAuth firebaseAuth;
 
     public Optional<Player> findById(String id) {
         return repository.findById(id).blockOptional();
     }
-    public PlayerResponse onboardPlayer(String id) throws FirebaseAuthException {
-            firestore.listCollections().forEach((c) -> System.out.println(c.getId()));
-            return mapper.toPlayerResponse(
-                    repository.save(
-                            mapper.toPlayer(firebaseAuth.getUser(id))
-                    ).block());
+    public PlayerResponse onboardPlayer(String id) {
+            return mapper.toPlayerResponse(createPlayer(id));
+    }
+
+    public Player createPlayer(String id)  {
+        try {
+            return repository.save(mapper.toPlayer(firebaseAuth.getUser(id))).block();
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
