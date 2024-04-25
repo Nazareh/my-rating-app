@@ -75,6 +75,7 @@ class MatchServiceTest {
             //then
             assertThat(result.getId()).isNotBlank();
             assertThat(result.getStartTime()).isEqualTo(input.getStartTime());
+            assertThat(result.getStatus()).isEqualTo(MatchStatusEnum.PENDING);
 
             assertThat(result.getTeam1().getMatchPlayer1().getId()).isEqualTo(input.getTeam1().getMatchPlayer1());
             assertThat(result.getTeam1().getMatchPlayer1().getStatus()).isEqualTo(MatchStatusEnum.APPROVED);
@@ -97,7 +98,6 @@ class MatchServiceTest {
 
         }
 
-
         @ParameterizedTest
         @CsvSource({"APPROVED", "PENDING"})
         @DisplayName("Should update players approval, when a match already exists")
@@ -107,6 +107,7 @@ class MatchServiceTest {
             when(repository.save(any(Match.class))).thenAnswer(i -> Mono.just(i.getArguments()[0]));
             Match existingMatch = podamFactory.manufacturePojo(Match.class);
             existingMatch.setStartTime(input.getStartTime().toInstant());
+            existingMatch.setStatus(MatchStatus.PENDING);
 
             existingMatch.getTeam1().getMatchPlayer1().setId(input.getTeam1().getMatchPlayer1());
             existingMatch.getTeam1().getMatchPlayer1().setStatus(MatchStatus.PENDING);
@@ -128,6 +129,7 @@ class MatchServiceTest {
             //then
             assertThat(result.getId()).isNotBlank();
             assertThat(result.getStartTime().toInstant()).isEqualTo(existingMatch.getStartTime());
+            assertThat(result.getStatus()).isEqualTo(MatchStatusEnum.PENDING);
 
             assertThat(result.getTeam1().getMatchPlayer1().getId()).isEqualTo(existingMatch.getTeam1().getMatchPlayer1().getId());
             assertThat(result.getTeam1().getMatchPlayer1().getStatus()).isEqualTo(MatchStatusEnum.APPROVED);
@@ -170,6 +172,59 @@ class MatchServiceTest {
             verify(repository).findAllByStartTime(any(Instant.class));
             verify(authenticationFacade).authenticatedUserId();
             verify(playerService, times(4)).findById(anyString());
+        }
+
+        @Test
+        @DisplayName("Should set match to APPROVED, when all players posted the same match")
+        void approveMatch() {
+
+            //given
+            when(repository.save(any(Match.class))).thenAnswer(i -> Mono.just(i.getArguments()[0]));
+            Match existingMatch = podamFactory.manufacturePojo(Match.class);
+            existingMatch.setStartTime(input.getStartTime().toInstant());
+            existingMatch.setStatus(MatchStatus.PENDING);
+
+            existingMatch.getTeam1().getMatchPlayer1().setId(input.getTeam1().getMatchPlayer1());
+            existingMatch.getTeam1().getMatchPlayer1().setStatus(MatchStatus.PENDING);
+
+            existingMatch.getTeam1().getMatchPlayer2().setId(input.getTeam1().getMatchPlayer2());
+            existingMatch.getTeam1().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
+
+            existingMatch.getTeam2().getMatchPlayer1().setId(input.getTeam2().getMatchPlayer1());
+            existingMatch.getTeam2().getMatchPlayer1().setStatus(MatchStatus.APPROVED);
+
+            existingMatch.getTeam2().getMatchPlayer2().setId(input.getTeam2().getMatchPlayer2());
+            existingMatch.getTeam2().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
+
+            when(repository.findAllByStartTime(any(Instant.class))).then(i -> Flux.just(existingMatch));
+
+            //when
+            var result = sut.createMatch(input);
+
+            //then
+            assertThat(result.getId()).isNotBlank();
+            assertThat(result.getStartTime().toInstant()).isEqualTo(existingMatch.getStartTime());
+
+            assertThat(result.getTeam1().getMatchPlayer1().getId()).isEqualTo(existingMatch.getTeam1().getMatchPlayer1().getId());
+            assertThat(result.getTeam1().getMatchPlayer1().getStatus()).isEqualTo(MatchStatusEnum.APPROVED);
+
+            assertThat(result.getTeam1().getMatchPlayer2().getId()).isEqualTo(existingMatch.getTeam1().getMatchPlayer2().getId());
+            assertThat(result.getTeam1().getMatchPlayer2().getStatus()).isEqualTo(MatchStatusEnum.APPROVED);
+
+            assertThat(result.getTeam2().getMatchPlayer1().getId()).isEqualTo(existingMatch.getTeam2().getMatchPlayer1().getId());
+            assertThat(result.getTeam2().getMatchPlayer1().getStatus()).isEqualTo(MatchStatusEnum.APPROVED);
+
+            assertThat(result.getTeam2().getMatchPlayer2().getId()).isEqualTo(existingMatch.getTeam2().getMatchPlayer2().getId());
+            assertThat(result.getTeam2().getMatchPlayer2().getStatus()).isEqualTo(MatchStatusEnum.APPROVED);
+
+            assertThat(result.getStatus()).isEqualTo(MatchStatusEnum.APPROVED);
+            assertThat(result.getSetsPlayed()).usingRecursiveComparison().isEqualTo(existingMatch.getSetsPlayed());
+
+            verify(repository).save(any(Match.class));
+            verify(repository).findAllByStartTime(any(Instant.class));
+            verify(playerService, times(4)).findById(anyString());
+            verify(authenticationFacade).authenticatedUserId();
+
         }
     }
 

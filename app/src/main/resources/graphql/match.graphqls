@@ -55,6 +55,7 @@ type MatchResponse {
     team2: TeamResponse!
     setsPlayed: [SetResponse!]!
     startTime: DateTime!
+    status: MatchStatusEnum
 }
 
 enum MatchStatusEnum {

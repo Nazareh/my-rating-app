@@ -51,9 +51,10 @@ class MatchMapperTest {
         var matchPlayer3 = podamFactory.manufacturePojo(MatchPlayer.class);
         var matchPlayer4 = podamFactory.manufacturePojo(MatchPlayer.class);
 
-        var match = MatchMapper.INSTANCE.toMatch(id, matchInput, matchPlayer1, matchPlayer2, matchPlayer3, matchPlayer4);
+        var match = MatchMapper.INSTANCE.toMatch(id, MatchStatus.PENDING, matchInput, matchPlayer1, matchPlayer2, matchPlayer3, matchPlayer4);
 
         assertThat(match.getId()).isEqualTo(id);
+        assertThat(match.getStatus()).isEqualTo(MatchStatus.PENDING);
         assertThat(match.getStartTime()).isEqualTo(matchInput.getStartTime().toInstant());
         assertThat(match.getTeam1().getMatchPlayer1()).isEqualTo(matchPlayer1);
         assertThat(match.getTeam1().getMatchPlayer2()).isEqualTo(matchPlayer2);

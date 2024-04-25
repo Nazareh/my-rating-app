@@ -19,11 +19,12 @@ interface MatchMapper {
 
     MatchPlayer toMatchPlayer(Player player,MatchStatus status );
 
-    default Match toMatch(String id, MatchInput input, MatchPlayer matchPlayer1, MatchPlayer matchPlayer2, MatchPlayer matchPlayer3, MatchPlayer matchPlayer4) {
+    default Match toMatch(String id, MatchStatus status,  MatchInput input, MatchPlayer matchPlayer1, MatchPlayer matchPlayer2, MatchPlayer matchPlayer3, MatchPlayer matchPlayer4) {
         return new Match(id, input.getStartTime().toInstant(),
                 new Team(matchPlayer1, matchPlayer2),
                 new Team(matchPlayer3, matchPlayer4),
-                input.getSetsPlayed().stream().map(set -> new SetPlayed(set.getTeam1Score(), set.getTeam2Score())).toList());
+                input.getSetsPlayed().stream().map(set -> new SetPlayed(set.getTeam1Score(), set.getTeam2Score())).toList(),
+                status);
 
     }
 

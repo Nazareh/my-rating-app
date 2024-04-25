@@ -50,10 +50,22 @@ class MatchService {
         if (postedMatch.getTeam2().getMatchPlayer2().getId().equals(authenticatedUserId))
             postedMatch.getTeam2().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
 
+        approveMatchIfAllPlayersApproved(postedMatch);
+
         var savedMatch = repository.save(postedMatch).block();
+
 //        rabbitTemplate.convertAndSend(MatchRabbitConfig.MATCH_EXCHANGE, MatchRabbitConfig.MATCH_QUEUE, match);
         log.info("Match created: {}", savedMatch);
         return mapper.toMatchResponse(savedMatch);
+    }
+
+    private void approveMatchIfAllPlayersApproved(Match postedMatch) {
+        if (postedMatch.getTeam1().getMatchPlayer1().getStatus().equals(MatchStatus.APPROVED) &&
+                postedMatch.getTeam1().getMatchPlayer2().getStatus().equals(MatchStatus.APPROVED) &&
+                postedMatch.getTeam2().getMatchPlayer1().getStatus().equals(MatchStatus.APPROVED) &&
+                postedMatch.getTeam2().getMatchPlayer2().getStatus().equals(MatchStatus.APPROVED)){
+            postedMatch.setStatus(MatchStatus.APPROVED);
+        }
     }
 
     private void validateNoPlayerIsOnTwoMatches(MatchInput input, List<Match> matches, Match postedMatch) {
@@ -75,7 +87,7 @@ class MatchService {
 
     @NotNull
     private Match createNewMatch(MatchInput input) {
-        return mapper.toMatch(UUID.randomUUID().toString(), input,
+        return mapper.toMatch(UUID.randomUUID().toString(), MatchStatus.PENDING, input,
                 getOrOnboardPlayer(input.getTeam1().getMatchPlayer1()),
                 getOrOnboardPlayer(input.getTeam1().getMatchPlayer2()),
                 getOrOnboardPlayer(input.getTeam2().getMatchPlayer1()),
