@@ -19,4 +19,9 @@ class MatchController {
     MatchResponse postMatch(@Argument MatchInput input)  {
         return matchService.createMatch(input);
     }
+
+    @MutationMapping
+    MatchResponse approveMatch(@Argument String matchId)  {
+        return matchService.approveMatch(matchId);
+    }
 }

@@ -1,6 +1,7 @@
 type Mutation {
     postMatch(input: MatchInput!): MatchResponse!
     onboardMyself: PlayerResponse!
+    approveMatch(matchId: ID!): MatchResponse!
 }
 
 type PlayerResponse {

@@ -41,29 +41,54 @@ class MatchService {
 
         validateNoPlayerIsOnTwoMatches(input, matches, postedMatch);
 
-        if (postedMatch.getTeam1().getMatchPlayer1().getId().equals(authenticatedUserId))
-            postedMatch.getTeam1().getMatchPlayer1().setStatus(MatchStatus.APPROVED);
-        if (postedMatch.getTeam1().getMatchPlayer2().getId().equals(authenticatedUserId))
-            postedMatch.getTeam1().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
-        if (postedMatch.getTeam2().getMatchPlayer1().getId().equals(authenticatedUserId))
-            postedMatch.getTeam2().getMatchPlayer1().setStatus(MatchStatus.APPROVED);
-        if (postedMatch.getTeam2().getMatchPlayer2().getId().equals(authenticatedUserId))
-            postedMatch.getTeam2().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
+        return approveMatchForPlayer(postedMatch, authenticatedUserId);
 
-        approveMatchIfAllPlayersApproved(postedMatch);
+    }
 
-        var savedMatch = repository.save(postedMatch).block();
+    MatchResponse approveMatch(String matchId) {
+        var match = repository.findById(matchId).block();
+        if (match == null) throw new RuntimeException("Match not found");
 
-//        rabbitTemplate.convertAndSend(MatchRabbitConfig.MATCH_EXCHANGE, MatchRabbitConfig.MATCH_QUEUE, match);
-        log.info("Match created: {}", savedMatch);
+        var authenticatedUserId = authenticationFacade.authenticatedUserId();
+
+        return approveMatchForPlayer(match, authenticatedUserId);
+    }
+
+    private MatchResponse approveMatchForPlayer(Match match, String playerId) {
+        updatePlayerMatchStatus(match, playerId);
+        approveMatchIfAllPlayersApproved(match);
+        var savedMatch = repository.save(match).block();
         return mapper.toMatchResponse(savedMatch);
+
+
+    }
+
+    private static void updatePlayerMatchStatus(Match postedMatch, String playerId) {
+        if (postedMatch.getTeam1().getMatchPlayer1().getId().equals(playerId)) {
+            postedMatch.getTeam1().getMatchPlayer1().setStatus(MatchStatus.APPROVED);
+            return;
+        }
+        if (postedMatch.getTeam1().getMatchPlayer2().getId().equals(playerId)) {
+            postedMatch.getTeam1().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
+            return;
+        }
+        if (postedMatch.getTeam2().getMatchPlayer1().getId().equals(playerId)) {
+            postedMatch.getTeam2().getMatchPlayer1().setStatus(MatchStatus.APPROVED);
+            return;
+        }
+        if (postedMatch.getTeam2().getMatchPlayer2().getId().equals(playerId)) {
+            postedMatch.getTeam2().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
+            return;
+        }
+
+        throw new RuntimeException("Player is not part of the given match");
     }
 
     private void approveMatchIfAllPlayersApproved(Match postedMatch) {
         if (postedMatch.getTeam1().getMatchPlayer1().getStatus().equals(MatchStatus.APPROVED) &&
                 postedMatch.getTeam1().getMatchPlayer2().getStatus().equals(MatchStatus.APPROVED) &&
                 postedMatch.getTeam2().getMatchPlayer1().getStatus().equals(MatchStatus.APPROVED) &&
-                postedMatch.getTeam2().getMatchPlayer2().getStatus().equals(MatchStatus.APPROVED)){
+                postedMatch.getTeam2().getMatchPlayer2().getStatus().equals(MatchStatus.APPROVED)) {
             postedMatch.setStatus(MatchStatus.APPROVED);
         }
     }
@@ -71,10 +96,10 @@ class MatchService {
     private void validateNoPlayerIsOnTwoMatches(MatchInput input, List<Match> matches, Match postedMatch) {
         var playerSet = getSetOfPlayers(input);
 
-         if(matches.stream().filter(m -> !m.getId().equals(postedMatch.getId()))
-                        .anyMatch(m -> isAnyPlayerOnTeam(m.getTeam1(), playerSet) || isAnyPlayerOnTeam(m.getTeam2(), playerSet))) {
-             throw new RuntimeException("A player was found on another match during the same time");
-         };
+        if (matches.stream().filter(m -> !m.getId().equals(postedMatch.getId()))
+                .anyMatch(m -> isAnyPlayerOnTeam(m.getTeam1(), playerSet) || isAnyPlayerOnTeam(m.getTeam2(), playerSet))) {
+            throw new RuntimeException("A player was found on another match during the same time");
+        }
     }
 
     private Set<String> getSetOfPlayers(MatchInput input) {
@@ -109,7 +134,6 @@ class MatchService {
         }
 
         return filteredMatched.size() == 1 ? Optional.of(filteredMatched.getFirst()) : Optional.empty();
-
 
 
     }
