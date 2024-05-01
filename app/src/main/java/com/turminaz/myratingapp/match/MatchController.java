@@ -24,4 +24,9 @@ class MatchController {
     MatchResponse approveMatch(@Argument String matchId)  {
         return matchService.approveMatch(matchId);
     }
+
+    @MutationMapping
+    MatchResponse rejectMatch(@Argument String matchId)  {
+        return matchService.rejectMatch(matchId);
+    }
 }

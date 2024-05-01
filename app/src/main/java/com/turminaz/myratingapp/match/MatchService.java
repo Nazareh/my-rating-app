@@ -30,9 +30,8 @@ class MatchService {
     MatchResponse createMatch(MatchInput input) {
         log.info("Creating match: {}", input);
 
-        getSetOfPlayers(input);
+        validateFourDistinctPlayers(input);
 
-        var authenticatedUserId = authenticationFacade.authenticatedUserId();
         var matches = repository.findAllByStartTime(input.getStartTime().toInstant()).collectList().block();
         assert matches != null;
 
@@ -41,7 +40,7 @@ class MatchService {
 
         validateNoPlayerIsOnTwoMatches(input, matches, postedMatch);
 
-        return approveMatchForPlayer(postedMatch, authenticatedUserId);
+        return approveMatchForPlayer(postedMatch);
 
     }
 
@@ -49,39 +48,68 @@ class MatchService {
         var match = repository.findById(matchId).block();
         if (match == null) throw new RuntimeException("Match not found");
 
-        var authenticatedUserId = authenticationFacade.authenticatedUserId();
-
-        return approveMatchForPlayer(match, authenticatedUserId);
+        return approveMatchForPlayer(match);
     }
 
-    private MatchResponse approveMatchForPlayer(Match match, String playerId) {
-        updatePlayerMatchStatus(match, playerId);
-        approveMatchIfAllPlayersApproved(match);
+    MatchResponse rejectMatch(String matchId) {
+        var match = repository.findById(matchId).block();
+        if (match == null) throw new RuntimeException("Match not found");
+
+        log.info("Rejecting match {} ", match);
+
+        updatePlayerMatchStatus(match, MatchStatus.REJECTED);
+        match.setStatus(MatchStatus.REJECTED);
+
         var savedMatch = repository.save(match).block();
         return mapper.toMatchResponse(savedMatch);
 
-
     }
 
-    private static void updatePlayerMatchStatus(Match postedMatch, String playerId) {
+    private MatchResponse approveMatchForPlayer(Match match) {
+        log.info("Approving match {}", match);
+
+        updatePlayerMatchStatus(match, MatchStatus.APPROVED);
+        approveMatchIfAllPlayersApproved(match);
+
+        var savedMatch = repository.save(match).block();
+        return mapper.toMatchResponse(savedMatch);
+    }
+
+    private void updatePlayerMatchStatus(Match postedMatch, MatchStatus matchStatus) {
+        var playerId = authenticationFacade.authenticatedUserId();
+
+        validateUserIsOnMatch(playerId, postedMatch);
+
         if (postedMatch.getTeam1().getMatchPlayer1().getId().equals(playerId)) {
-            postedMatch.getTeam1().getMatchPlayer1().setStatus(MatchStatus.APPROVED);
+            postedMatch.getTeam1().getMatchPlayer1().setStatus(matchStatus);
             return;
         }
         if (postedMatch.getTeam1().getMatchPlayer2().getId().equals(playerId)) {
-            postedMatch.getTeam1().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
+            postedMatch.getTeam1().getMatchPlayer2().setStatus(matchStatus);
             return;
         }
         if (postedMatch.getTeam2().getMatchPlayer1().getId().equals(playerId)) {
-            postedMatch.getTeam2().getMatchPlayer1().setStatus(MatchStatus.APPROVED);
+            postedMatch.getTeam2().getMatchPlayer1().setStatus(matchStatus);
             return;
         }
         if (postedMatch.getTeam2().getMatchPlayer2().getId().equals(playerId)) {
-            postedMatch.getTeam2().getMatchPlayer2().setStatus(MatchStatus.APPROVED);
+            postedMatch.getTeam2().getMatchPlayer2().setStatus(matchStatus);
             return;
         }
 
         throw new RuntimeException("Player is not part of the given match");
+    }
+
+    private void validateUserIsOnMatch(String playerId, Match match) {
+        if (match.getTeam1().getMatchPlayer1().getId().equals(playerId) ||
+                match.getTeam1().getMatchPlayer2().getId().equals(playerId) ||
+                match.getTeam2().getMatchPlayer1().getId().equals(playerId) ||
+                match.getTeam2().getMatchPlayer2().getId().equals(playerId)) {
+                return;
+        }
+
+        log.error("Player {} is not on match {}", playerId, match);
+        throw new RuntimeException("Player is not on match");
     }
 
     private void approveMatchIfAllPlayersApproved(Match postedMatch) {
@@ -94,7 +122,7 @@ class MatchService {
     }
 
     private void validateNoPlayerIsOnTwoMatches(MatchInput input, List<Match> matches, Match postedMatch) {
-        var playerSet = getSetOfPlayers(input);
+        var playerSet = validateFourDistinctPlayers(input);
 
         if (matches.stream().filter(m -> !m.getId().equals(postedMatch.getId()))
                 .anyMatch(m -> isAnyPlayerOnTeam(m.getTeam1(), playerSet) || isAnyPlayerOnTeam(m.getTeam2(), playerSet))) {
@@ -102,7 +130,7 @@ class MatchService {
         }
     }
 
-    private Set<String> getSetOfPlayers(MatchInput input) {
+    private Set<String> validateFourDistinctPlayers(MatchInput input) {
         return Set.of(input.getTeam1().getMatchPlayer1(),
                 input.getTeam1().getMatchPlayer2(),
                 input.getTeam2().getMatchPlayer1(),
