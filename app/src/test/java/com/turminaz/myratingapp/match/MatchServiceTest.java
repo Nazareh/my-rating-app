@@ -60,7 +60,7 @@ class MatchServiceTest {
         when(authenticationFacade.authenticatedUserId()).thenReturn(input.getTeam1().getMatchPlayer1());
         when(repository.save(any(Match.class))).thenAnswer(i -> Mono.just(i.getArguments()[0]));
         when(repository.findAllByStartTime(any(Instant.class))).then(i -> Flux.empty());
-        when(playerService.findById(anyString())).thenAnswer(i -> Optional.of(new Player((String) i.getArguments()[0], "", "")));
+        when(playerService.findById(anyString())).thenAnswer(i -> Optional.of(new Player().setId((String) i.getArguments()[0])));
 
         //when
         var result = sut.createMatch(input);

@@ -1,23 +1,31 @@
 package com.turminaz.myratingapp.player;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
-import com.netflix.dgs.codegen.generated.types.PlayerResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.graphql.data.method.annotation.MutationMapping;
-import org.springframework.stereotype.Controller;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.security.Principal;
+import java.util.*;
 
-@Controller
+@RestController
+@RequestMapping("/api/v1/player")
 @RequiredArgsConstructor
-@Slf4j
-public class PlayerController {
+class PlayerController {
 
-    private final PlayerService playerService;
+    private final PlayerService service;
+    private final FirebaseAuth firebaseAuth;
 
-    @MutationMapping
-    PlayerResponse onboardMyself(Principal principal) throws FirebaseAuthException {
-        return playerService.onboardPlayer(principal.getName());
+    @PostMapping("/register/csv")
+    Set<PlayerDto> registerPlayersFromCsv(@RequestPart(value = "file") MultipartFile file, Principal principal) throws IOException, FirebaseAuthException {
+        return service.registerPlayersFromCsv(file.getInputStream());
+    }
+
+    @GetMapping
+    List<PlayerDto> getAllPlayers() {
+        return service.getAllPlayers();
     }
 }

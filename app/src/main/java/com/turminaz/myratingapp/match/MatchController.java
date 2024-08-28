@@ -1,32 +1,35 @@
 package com.turminaz.myratingapp.match;
 
-import com.netflix.dgs.codegen.generated.types.MatchInput;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.netflix.dgs.codegen.generated.types.MatchResponse;
+import com.turminaz.myratingapp.player.PlayerDto;
+import com.turminaz.myratingapp.player.PlayerService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.graphql.data.method.annotation.Argument;
-import org.springframework.graphql.data.method.annotation.MutationMapping;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-@Controller
+import java.io.IOException;
+import java.security.Principal;
+import java.util.List;
+import java.util.Set;
+
+@RestController
+@RequestMapping("/api/v1/match")
 @RequiredArgsConstructor
-@Slf4j
 class MatchController {
 
-    private final MatchService matchService;
+    private final MatchService service;
+    private final FirebaseAuth firebaseAuth;
 
-    @MutationMapping
-    MatchResponse postMatch(@Argument MatchInput input)  {
-        return matchService.createMatch(input);
+    @PostMapping("/csv")
+    Set<MatchResponse> registerPlayersFromCsv(@RequestPart(value = "file") MultipartFile file) throws IOException {
+        return service.uploadMatchFromCsv(file.getInputStream());
     }
 
-    @MutationMapping
-    MatchResponse approveMatch(@Argument String matchId)  {
-        return matchService.approveMatch(matchId);
-    }
 
-    @MutationMapping
-    MatchResponse rejectMatch(@Argument String matchId)  {
-        return matchService.rejectMatch(matchId);
+    @GetMapping
+    List<MatchResponse> getAllMatches() {
+        return service.getAllMatches();
     }
 }

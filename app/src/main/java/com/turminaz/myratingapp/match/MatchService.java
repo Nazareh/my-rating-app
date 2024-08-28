@@ -2,17 +2,21 @@ package com.turminaz.myratingapp.match;
 
 import com.netflix.dgs.codegen.generated.types.MatchInput;
 import com.netflix.dgs.codegen.generated.types.MatchResponse;
+import com.opencsv.bean.CsvToBeanBuilder;
 import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.player.PlayerService;
+import com.turminaz.myratingapp.player.RegisterPlayerDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.turminaz.myratingapp.match.MatchUtils.areAllPlayersOnTeam;
 import static com.turminaz.myratingapp.match.MatchUtils.isAnyPlayerOnTeam;
@@ -36,11 +40,11 @@ class MatchService {
         assert matches != null;
 
         var existingMatch = findMatchWithAllPlayers(input, matches);
-        Match postedMatch = existingMatch.orElse(createNewMatch(input));
+        Match postedMatch = existingMatch.orElse(buildMatchObject(input));
 
         validateNoPlayerIsOnTwoMatches(input, matches, postedMatch);
 
-        return approveMatchForPlayer(postedMatch);
+        return approveMatchForPlayerAndSave(postedMatch);
 
     }
 
@@ -48,7 +52,7 @@ class MatchService {
         var match = repository.findById(matchId).block();
         if (match == null) throw new RuntimeException("Match not found");
 
-        return approveMatchForPlayer(match);
+        return approveMatchForPlayerAndSave(match);
     }
 
     MatchResponse rejectMatch(String matchId) {
@@ -65,7 +69,22 @@ class MatchService {
 
     }
 
-    private MatchResponse approveMatchForPlayer(Match match) {
+    Set<MatchResponse> uploadMatchFromCsv(InputStream inputStream) {
+
+        new CsvToBeanBuilder<PostMatchDto>(new InputStreamReader(inputStream))
+                .withType(PostMatchDto.class)
+                .build().parse().forEach(System.out::println);
+
+        return Set.of();
+    }
+
+    List<MatchResponse> getAllMatches() {
+        return repository.findAll().collectList().block().stream()
+                .map(mapper::toMatchResponse)
+                .collect(Collectors.toList());
+    }
+
+    private MatchResponse approveMatchForPlayerAndSave(Match match) {
         log.info("Approving match {}", match);
 
         updatePlayerMatchStatus(match, MatchStatus.APPROVED);
@@ -77,8 +96,6 @@ class MatchService {
 
     private void updatePlayerMatchStatus(Match postedMatch, MatchStatus matchStatus) {
         var playerId = authenticationFacade.authenticatedUserId();
-
-        validateUserIsOnMatch(playerId, postedMatch);
 
         if (postedMatch.getTeam1().getMatchPlayer1().getId().equals(playerId)) {
             postedMatch.getTeam1().getMatchPlayer1().setStatus(matchStatus);
@@ -98,18 +115,6 @@ class MatchService {
         }
 
         throw new RuntimeException("Player is not part of the given match");
-    }
-
-    private void validateUserIsOnMatch(String playerId, Match match) {
-        if (match.getTeam1().getMatchPlayer1().getId().equals(playerId) ||
-                match.getTeam1().getMatchPlayer2().getId().equals(playerId) ||
-                match.getTeam2().getMatchPlayer1().getId().equals(playerId) ||
-                match.getTeam2().getMatchPlayer2().getId().equals(playerId)) {
-                return;
-        }
-
-        log.error("Player {} is not on match {}", playerId, match);
-        throw new RuntimeException("Player is not on match");
     }
 
     private void approveMatchIfAllPlayersApproved(Match postedMatch) {
@@ -135,11 +140,9 @@ class MatchService {
                 input.getTeam1().getMatchPlayer2(),
                 input.getTeam2().getMatchPlayer1(),
                 input.getTeam2().getMatchPlayer2());
-
     }
 
-    @NotNull
-    private Match createNewMatch(MatchInput input) {
+    private Match buildMatchObject(MatchInput input) {
         return mapper.toMatch(UUID.randomUUID().toString(), MatchStatus.PENDING, input,
                 getOrOnboardPlayer(input.getTeam1().getMatchPlayer1()),
                 getOrOnboardPlayer(input.getTeam1().getMatchPlayer2()),
@@ -162,14 +165,13 @@ class MatchService {
         }
 
         return filteredMatched.size() == 1 ? Optional.of(filteredMatched.getFirst()) : Optional.empty();
-
-
     }
 
-    @NotNull
     private MatchPlayer getOrOnboardPlayer(String playerId) {
         return mapper.toMatchPlayer(
                 playerService.findById(playerId).orElseGet(() -> playerService.createPlayer(playerId)),
                 MatchStatus.PENDING);
     }
+
+
 }
