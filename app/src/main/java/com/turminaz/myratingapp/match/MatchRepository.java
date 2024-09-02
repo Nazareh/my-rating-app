@@ -10,7 +10,5 @@ import java.util.List;
 
 @Repository
 interface MatchRepository extends FirestoreReactiveRepository<Match> {
-    Flux<Match> findAllByStartTime(Instant parse);
-
-    Flux<Match> findAllByStartTimeAndPlayers(Instant startTime, List<MatchPlayer> players);
+    Flux<Match> findAllByStartTimeGreaterThan(Instant instant);
 }

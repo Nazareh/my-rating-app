@@ -14,10 +14,9 @@ import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.time.chrono.ChronoPeriod;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 //
 //import static com.turminaz.myratingapp.match.MatchUtils.areAllPlayersOnTeam;
@@ -75,9 +74,10 @@ class MatchService {
         return new CsvToBeanBuilder<PostMatchDto>(new InputStreamReader(inputStream))
                 .withType(PostMatchDto.class)
                 .build().parse().stream()
+                .sorted(Comparator.comparing(PostMatchDto::getStartTime))
                 .map(mapper::toMatch)
                 .peek(match -> {
-                    var allByStartTime = repository.findAllByStartTime(match.getStartTime()).collect(Collectors.toList()).block();
+                    var allByStartTime = repository.findAllByStartTimeGreaterThan(match.getStartTime().minus(1, ChronoUnit.HOURS)).collect(Collectors.toList()).block();
                     var players = match.getPlayers().stream().map(MatchPlayer::getId).toList();
                     assert allByStartTime != null;
                     var validMatch =  allByStartTime.stream().noneMatch(m -> m.getPlayers().stream().map(MatchPlayer::getId).anyMatch(players::contains));
