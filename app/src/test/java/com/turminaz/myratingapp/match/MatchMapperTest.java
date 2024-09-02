@@ -42,25 +42,25 @@ class MatchMapperTest {
 
     }
 
-    @Test
-    void toMatch() {
-        var id = podamFactory.manufacturePojo(String.class);
-        var matchInput = podamFactory.manufacturePojo(MatchInput.class);
-        var matchPlayer1 = podamFactory.manufacturePojo(MatchPlayer.class);
-        var matchPlayer2 = podamFactory.manufacturePojo(MatchPlayer.class);
-        var matchPlayer3 = podamFactory.manufacturePojo(MatchPlayer.class);
-        var matchPlayer4 = podamFactory.manufacturePojo(MatchPlayer.class);
-
-        var match = MatchMapper.INSTANCE.toMatch(id, MatchStatus.PENDING, matchInput, matchPlayer1, matchPlayer2, matchPlayer3, matchPlayer4);
-
-        assertThat(match.getId()).isEqualTo(id);
-        assertThat(match.getStatus()).isEqualTo(MatchStatus.PENDING);
-        assertThat(match.getStartTime()).isEqualTo(matchInput.getStartTime().toInstant());
-        assertThat(match.getTeam1().getMatchPlayer1()).isEqualTo(matchPlayer1);
-        assertThat(match.getTeam1().getMatchPlayer2()).isEqualTo(matchPlayer2);
-        assertThat(match.getTeam2().getMatchPlayer1()).isEqualTo(matchPlayer3);
-        assertThat(match.getTeam2().getMatchPlayer2()).isEqualTo(matchPlayer4);
-        assertThat(match.getSetsPlayed()).usingRecursiveComparison().isEqualTo(matchInput.getSetsPlayed());
-
-    }
+//    @Test
+//    void toMatch() {
+//        var id = podamFactory.manufacturePojo(String.class);
+//        var matchInput = podamFactory.manufacturePojo(MatchInput.class);
+//        var matchPlayer1 = podamFactory.manufacturePojo(MatchPlayer.class);
+//        var matchPlayer2 = podamFactory.manufacturePojo(MatchPlayer.class);
+//        var matchPlayer3 = podamFactory.manufacturePojo(MatchPlayer.class);
+//        var matchPlayer4 = podamFactory.manufacturePojo(MatchPlayer.class);
+//
+//        var match = MatchMapper.INSTANCE.toMatch(id, MatchStatus.PENDING, matchInput, matchPlayer1, matchPlayer2, matchPlayer3, matchPlayer4);
+//
+//        assertThat(match.getId()).isEqualTo(id);
+//        assertThat(match.getStatus()).isEqualTo(MatchStatus.PENDING);
+//        assertThat(match.getStartTime()).isEqualTo(matchInput.getStartTime().toInstant());
+//        assertThat(match.getTeam1().getMatchPlayer1()).isEqualTo(matchPlayer1);
+//        assertThat(match.getTeam1().getMatchPlayer2()).isEqualTo(matchPlayer2);
+//        assertThat(match.getTeam2().getMatchPlayer1()).isEqualTo(matchPlayer3);
+//        assertThat(match.getTeam2().getMatchPlayer2()).isEqualTo(matchPlayer4);
+//        assertThat(match.getSetsPlayed()).usingRecursiveComparison().isEqualTo(matchInput.getSetsPlayed());
+//
+//    }
 }

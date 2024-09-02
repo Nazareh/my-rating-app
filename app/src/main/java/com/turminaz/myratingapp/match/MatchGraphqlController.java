@@ -15,18 +15,18 @@ class MatchGraphqlController {
 
     private final MatchService matchService;
 
-    @MutationMapping
-    MatchResponse postMatch(@Argument MatchInput input)  {
-        return matchService.createMatch(input);
-    }
+//    @MutationMapping
+//    MatchResponse postMatch(@Argument MatchInput input)  {
+//        return matchService.createMatch(input);
+//    }
+//
+//    @MutationMapping
+//    MatchResponse approveMatch(@Argument String matchId)  {
+//        return matchService.approveMatch(matchId);
+//    }
 
-    @MutationMapping
-    MatchResponse approveMatch(@Argument String matchId)  {
-        return matchService.approveMatch(matchId);
-    }
-
-    @MutationMapping
-    MatchResponse rejectMatch(@Argument String matchId)  {
-        return matchService.rejectMatch(matchId);
-    }
+//    @MutationMapping
+//    MatchResponse rejectMatch(@Argument String matchId)  {
+//        return matchService.rejectMatch(matchId);
+//    }
 }

@@ -4,6 +4,7 @@ import com.opencsv.bean.CsvDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class PostMatchDto {
    @CsvDate(value = "yyyy-MM-dd HH:mm")
-   private LocalDate startTime;
+   private LocalDateTime startTime;
    private String team1Player1;
    private String team1Player2;
    private String team2Player1;

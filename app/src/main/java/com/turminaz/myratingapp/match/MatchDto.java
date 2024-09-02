@@ -9,19 +9,16 @@ import lombok.experimental.Accessors;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Set;
 
-@Document
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-class Match {
-    @DocumentId
+class MatchDto {
     private String id;
-    private Instant startTime;
-    private List<MatchPlayer> players;
+    private LocalDateTime startTime;
+    private Set<MatchPlayerDto> players;
     private int set1Team1Score;
     private int set1Team2Score;
     private int set2Team1Score;

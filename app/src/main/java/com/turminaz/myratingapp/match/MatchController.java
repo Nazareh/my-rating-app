@@ -23,13 +23,13 @@ class MatchController {
     private final FirebaseAuth firebaseAuth;
 
     @PostMapping("/csv")
-    Set<MatchResponse> registerPlayersFromCsv(@RequestPart(value = "file") MultipartFile file) throws IOException {
+    Set<MatchDto> registerPlayersFromCsv(@RequestPart(value = "file") MultipartFile file) throws IOException {
         return service.uploadMatchFromCsv(file.getInputStream());
     }
 
 
     @GetMapping
-    List<MatchResponse> getAllMatches() {
+    List<MatchDto> getAllMatches() {
         return service.getAllMatches();
     }
 }
