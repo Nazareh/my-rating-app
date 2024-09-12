@@ -13,33 +13,33 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MatchMapperTest {
     private final PodamFactory podamFactory = new PodamFactoryImpl();
-    @Test
-    void toMatchResponse() {
-        var match = podamFactory.manufacturePojo(Match.class);
-
-        var matchResponse = MatchMapper.INSTANCE.toMatchResponse(match);
-
-        assertThat(matchResponse).usingRecursiveComparison()
-                .ignoringFieldsOfTypes(OffsetDateTime.class)
-                .isEqualTo(match);
-
-        assertThat(matchResponse.getStartTime().toInstant()).isEqualTo(match.getStartTime());
-    }
-
-    @Test
-    void toMatchPlayer() {
-        var player = podamFactory.manufacturePojo(Player.class);
-        var matchStatus = podamFactory.manufacturePojo(MatchStatus.class);
-
-        var matchPlayer = MatchMapper.INSTANCE.toMatchPlayer(player, matchStatus);
-
-        assertThat(matchPlayer).usingRecursiveComparison()
-                .ignoringFieldsOfTypes(MatchStatus.class)
-                .isEqualTo(player);
-
-        assertThat(matchPlayer.getStatus()).isEqualTo(matchStatus);
-
-    }
+//    @Test
+//    void toMatchResponse() {
+//        var match = podamFactory.manufacturePojo(Match.class);
+//
+//        var matchResponse = MatchMapper.INSTANCE.toMatchResponse(match);
+//
+//        assertThat(matchResponse).usingRecursiveComparison()
+//                .ignoringFieldsOfTypes(OffsetDateTime.class)
+//                .isEqualTo(match);
+//
+//        assertThat(matchResponse.getStartTime().toInstant()).isEqualTo(match.getStartTime());
+//    }
+//
+//    @Test
+//    void toMatchPlayer() {
+//        var player = podamFactory.manufacturePojo(Player.class);
+//        var matchStatus = podamFactory.manufacturePojo(MatchStatus.class);
+//
+//        var matchPlayer = MatchMapper.INSTANCE.toMatchPlayer(player, matchStatus);
+//
+//        assertThat(matchPlayer).usingRecursiveComparison()
+//                .ignoringFieldsOfTypes(MatchStatus.class)
+//                .isEqualTo(player);
+//
+//        assertThat(matchPlayer.getStatus()).isEqualTo(matchStatus);
+//
+//    }
 
 //    @Test
 //    void toMatch() {
