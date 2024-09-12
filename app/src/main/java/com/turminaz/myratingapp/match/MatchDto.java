@@ -1,13 +1,11 @@
 package com.turminaz.myratingapp.match;
 
-import com.google.cloud.firestore.annotation.DocumentId;
-import com.google.cloud.spring.data.firestore.Document;
+import com.turminaz.myratingapp.model.MatchStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Set;
 

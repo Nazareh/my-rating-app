@@ -1,4 +1,4 @@
-package com.turminaz.myratingapp.match;
+package com.turminaz.myratingapp.model;
 
 import com.google.cloud.firestore.annotation.DocumentId;
 import com.google.cloud.spring.data.firestore.Document;
@@ -8,16 +8,14 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 @Document
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-class Match {
+public class Match {
     @DocumentId
     private String id;
     private Instant startTime;

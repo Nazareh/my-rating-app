@@ -30,6 +30,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-graphql'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+	implementation 'org.springframework.boot:spring-boot-starter-artemis'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	runtimeOnly 'org.apache.activemq:artemis-jakarta-server'
 	implementation 'com.opencsv:opencsv:5.9'
 	implementation 'com.graphql-java:graphql-java-extended-scalars:19.0' // bump up as soon as netflix allows it
 	implementation("com.tailrocks.graphql:graphql-datetime-spring-boot-starter:6.0.0")

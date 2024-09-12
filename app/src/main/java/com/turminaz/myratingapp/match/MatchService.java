@@ -1,26 +1,23 @@
 package com.turminaz.myratingapp.match;
 
-import com.netflix.dgs.codegen.generated.types.MatchInput;
-import com.netflix.dgs.codegen.generated.types.MatchResponse;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.turminaz.myratingapp.config.AuthenticationFacade;
-import com.turminaz.myratingapp.model.Player;
+import com.turminaz.myratingapp.model.MatchPlayer;
+import com.turminaz.myratingapp.model.MatchStatus;
 import com.turminaz.myratingapp.player.PlayerService;
-import com.turminaz.myratingapp.player.RegisterPlayerDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.time.chrono.ChronoPeriod;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-//
-//import static com.turminaz.myratingapp.match.MatchUtils.areAllPlayersOnTeam;
-//import static com.turminaz.myratingapp.match.MatchUtils.isAnyPlayerOnTeam;
+
+import static com.turminaz.myratingapp.utils.MatchUtils.isMatchResultValid;
+import static com.turminaz.myratingapp.utils.MatchUtils.isSetResultValid;
 
 @Service
 @Slf4j
@@ -31,6 +28,7 @@ class MatchService {
     private final PlayerService playerService;
     private final AuthenticationFacade authenticationFacade;
     private final MatchMapper mapper;
+    private final JmsTemplate jmsTemplate;
 
 //    MatchResponse createMatch(MatchInput input) {
 //        log.info("Creating match: {}", input);
@@ -71,6 +69,8 @@ class MatchService {
 //    }
 
     Set<MatchDto> uploadMatchFromCsv(InputStream inputStream) {
+
+
         return new CsvToBeanBuilder<PostMatchDto>(new InputStreamReader(inputStream))
                 .withType(PostMatchDto.class)
                 .build().parse().stream()
@@ -78,14 +78,26 @@ class MatchService {
                 .map(mapper::toMatch)
                 .peek(match -> {
                     var allByStartTime = repository.findAllByStartTimeGreaterThan(match.getStartTime().minus(1, ChronoUnit.HOURS)).collect(Collectors.toList()).block();
-                    var players = match.getPlayers().stream().map(MatchPlayer::getId).toList();
-                    assert allByStartTime != null;
-                    var validMatch =  allByStartTime.stream().noneMatch(m -> m.getPlayers().stream().map(MatchPlayer::getId).anyMatch(players::contains));
-                    match.setStatus(validMatch ? MatchStatus.APPROVED : MatchStatus.REJECTED);
-                    match.setRejectedReason(validMatch ? null : "Another match already exists for the same time or future");
+
+                    var players = match.getPlayers().stream().map(MatchPlayer::getId).collect(Collectors.toSet());
+                    if (players.size() != 4) {
+                        match.setStatus(MatchStatus.REJECTED);
+                        match.setRejectedReason("Four distinct players are needed");
+                    } else {
+                        assert allByStartTime != null;
+                        var validMatch = allByStartTime.stream().noneMatch(m -> m.getPlayers().stream().map(MatchPlayer::getId).anyMatch(players::contains));
+                        match.setStatus(validMatch && isMatchResultValid(match) ? MatchStatus.APPROVED : MatchStatus.REJECTED);
+                        match.setRejectedReason(validMatch ? null : "Another match already exists for the same time or future");
+                    }
                 })
-                .peek(match -> match.getPlayers().forEach(matchPlayer -> matchPlayer.setName(playerService.findById(matchPlayer.getId()).orElseThrow().getName())))
+                .peek(match -> match.getPlayers().forEach(matchPlayer -> matchPlayer.setName(playerService.findById(matchPlayer.getId())
+                        .orElseThrow().getName())))
                 .map(match -> repository.save(match).block())
+                .filter(Objects::nonNull)
+                .peek(match -> {
+                    if (match.getStatus() == MatchStatus.APPROVED)
+                        jmsTemplate.convertAndSend("matchCreated", match);
+                })
                 .map(mapper::toMatchDto)
                 .collect(Collectors.toSet());
     }

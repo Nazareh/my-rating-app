@@ -12,14 +12,18 @@ import org.mapstruct.factory.Mappers;
 public interface PlayerMapper {
     PlayerMapper INSTANCE = Mappers.getMapper(PlayerMapper.class);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "userUid", source = "uid")
-    @Mapping(target = "name", source = "displayName")
-    Player toPlayer(UserRecord userRecord);
+    default Player toPlayer(UserRecord userRecord){
+        return new Player()
+                .setUserUid(userRecord.getUid())
+                .setName(userRecord.getDisplayName())
+                .setEmail(userRecord.getEmail());
+    };
     PlayerResponse toPlayerResponse(Player player);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "userUid", ignore = true)
-    Player toPlayer(RegisterPlayerDto registerDto);
+    default Player toPlayer(RegisterPlayerDto registerDto) {
+        return new Player()
+                .setName(registerDto.getName())
+                .setEmail(registerDto.getEmail());
+    }
     PlayerDto toPlayerDto(Player registerDto);
 }

@@ -26,22 +26,22 @@ class EloCalculatorTest {
         );
     }
 
-    @ParameterizedTest
-    @MethodSource("provideExpectedNewRatings")
-    void testCalculateEloTeam1Wins(int team1Won, int[] initialRating, int[] expectedNewRatings, int[] kFactors) {
-
-        team1Ratings[0] = new PlayerRating().setCurrentElo(initialRating[0]).setId("player1").setCurrentKFactor(kFactors[0]);
-        team1Ratings[1] = new PlayerRating().setCurrentElo(initialRating[1]).setId("player2").setCurrentKFactor(kFactors[1]);
-        team2Ratings[0] = new PlayerRating().setCurrentElo(initialRating[2]).setId("player3").setCurrentKFactor(kFactors[2]);
-        team2Ratings[1] = new PlayerRating().setCurrentElo(initialRating[3]).setId("player4").setCurrentKFactor(kFactors[3]);
-
-        var newRatings = EloCalculator.calculateElo(team1Ratings, team2Ratings, team1Won);
-
-        assertThat(newRatings.get(team1Ratings[0].getId())).isEqualTo(expectedNewRatings[0]);
-        assertThat(newRatings.get(team1Ratings[1].getId())).isEqualTo(expectedNewRatings[1]);
-        assertThat(newRatings.get(team2Ratings[0].getId())).isEqualTo(expectedNewRatings[2]);
-        assertThat(newRatings.get(team2Ratings[1].getId())).isEqualTo(expectedNewRatings[3]);
-
-    }
+//    @ParameterizedTest
+//    @MethodSource("provideExpectedNewRatings")
+//    void testCalculateEloTeam1Wins(int team1Won, int[] initialRating, int[] expectedNewRatings, int[] kFactors) {
+//
+//        team1Ratings[0] = new PlayerRating().setCurrentElo(initialRating[0]).setId("player1").setCurrentKFactor(kFactors[0]);
+//        team1Ratings[1] = new PlayerRating().setCurrentElo(initialRating[1]).setId("player2").setCurrentKFactor(kFactors[1]);
+//        team2Ratings[0] = new PlayerRating().setCurrentElo(initialRating[2]).setId("player3").setCurrentKFactor(kFactors[2]);
+//        team2Ratings[1] = new PlayerRating().setCurrentElo(initialRating[3]).setId("player4").setCurrentKFactor(kFactors[3]);
+//
+//        var newRatings = EloCalculator.calculateElo(team1Ratings, team2Ratings, team1Won);
+//
+//        assertThat(newRatings.get(team1Ratings[0].getId())).isEqualTo(expectedNewRatings[0]);
+//        assertThat(newRatings.get(team1Ratings[1].getId())).isEqualTo(expectedNewRatings[1]);
+//        assertThat(newRatings.get(team2Ratings[0].getId())).isEqualTo(expectedNewRatings[2]);
+//        assertThat(newRatings.get(team2Ratings[1].getId())).isEqualTo(expectedNewRatings[3]);
+//
+//    }
 
 }

@@ -19,16 +19,10 @@ public class PlayerRating {
     @DocumentId
     private String id;
 
-    private int currentElo;
-    private int currentKFactor;
-    private int matchesPlayed;
-    private int win;
-    private int losses;
-    private int draws;
+    private int matchesWon;
+    private int matchesLost;
     private int gamesWon;
     private int gamesLost;
-    private int totalGames;
-    private double gameWinPercent;
 
     private Instant lastUpdated;
     private String lastMatchId;

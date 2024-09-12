@@ -1,4 +1,8 @@
 spring:
+  jms:
+    pub-sub-domain: true
+  artemis:
+    mode: EMBEDDED
   cloud:
     gcp:
       project-id: my-rating-app-auth

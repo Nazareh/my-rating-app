@@ -1,5 +1,6 @@
 package com.turminaz.myratingapp.match;
 
+import com.turminaz.myratingapp.model.MatchStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

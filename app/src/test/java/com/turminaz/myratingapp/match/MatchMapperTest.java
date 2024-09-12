@@ -1,14 +1,13 @@
 package com.turminaz.myratingapp.match;
 
-import com.netflix.dgs.codegen.generated.types.MatchInput;
+import com.turminaz.myratingapp.model.Match;
+import com.turminaz.myratingapp.model.MatchStatus;
 import com.turminaz.myratingapp.model.Player;
 import org.junit.jupiter.api.Test;
 import uk.co.jemos.podam.api.PodamFactory;
 import uk.co.jemos.podam.api.PodamFactoryImpl;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.OffsetTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

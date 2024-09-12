@@ -1,13 +1,13 @@
 package com.turminaz.myratingapp.match;
 
+import com.turminaz.myratingapp.model.Match;
+import com.turminaz.myratingapp.model.MatchPlayer;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 import java.time.*;
 import java.util.List;
-import java.util.Set;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 interface MatchMapper {
