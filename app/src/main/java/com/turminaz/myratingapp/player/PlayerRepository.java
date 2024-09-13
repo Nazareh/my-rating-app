@@ -11,7 +11,7 @@ import java.util.Set;
 
 
 @Repository
-interface PlayerRepository extends FirestoreReactiveRepository<Player> {
+public interface PlayerRepository extends FirestoreReactiveRepository<Player> {
 
     Mono<Player> findByEmail(String email);
 }

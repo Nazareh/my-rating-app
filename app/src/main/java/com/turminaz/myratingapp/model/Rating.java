@@ -1,4 +1,4 @@
-package com.turminaz.myratingapp.rating;
+package com.turminaz.myratingapp.model;
 
 
 import lombok.AllArgsConstructor;

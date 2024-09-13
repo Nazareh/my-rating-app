@@ -1,7 +1,9 @@
 package com.turminaz.myratingapp.rating;
 
-import com.turminaz.myratingapp.match.MatchUtils;
 import com.turminaz.myratingapp.model.Match;
+import com.turminaz.myratingapp.model.Player;
+import com.turminaz.myratingapp.player.PlayerRepository;
+import com.turminaz.myratingapp.model.Rating;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
@@ -20,8 +22,9 @@ public class EloRatingService extends RatingService {
     private static final int K_FACTOR_ESTABLISHED_PLAYER = 20;
     private static final int K_FACTOR_MATCHES_THRESHOLD = 10;
 
-    public EloRatingService(PlayerRatingRepository repository, JmsTemplate jmsTemplate) {
-        super(RatingType.ELO, jmsTemplate, repository);
+
+    public EloRatingService(PlayerRepository playerRepository, JmsTemplate jmsTemplate) {
+        super(RatingType.ELO, jmsTemplate, playerRepository);
     }
 
     @Override
@@ -30,16 +33,16 @@ public class EloRatingService extends RatingService {
         log.info("Calculating {} rating", ratingType);
 
         match.getPlayers().forEach(p -> {
-            var playerRating = repository.findById(p.getId()).blockOptional().orElseThrow();
+            var player = repository.findById(p.getId()).blockOptional().orElseThrow();
 
-            var ratings = playerRating.getRatings();
+            var ratings = player.getRatings();
 
             var lastRatingValue = ratings.isEmpty()
                     ? INITIAL_RATING
                     : Integer.parseInt(ratings.get(ratingType.name()).getLast().getValue());
 
             var newRatingValue = calculateElo(lastRatingValue * 2, 3000, getWinnerTeam(match) == p.getTeam(),
-                    calculateKFactor(playerRating)) / 2 + lastRatingValue;
+                    calculateKFactor(player)) / 2 + lastRatingValue;
 
             if (ratings.isEmpty()){
                 ratings.put(this.ratingType.name(), new ArrayList<>());
@@ -56,7 +59,7 @@ public class EloRatingService extends RatingService {
                 throw new IllegalArgumentException(String.format("A future rating already exists. LastRatingDate=%s MatchId=%s MatchDate=%s",
                         lastRating.getDateTime(), match.getId(), match.getStartTime()));
             }
-            repository.save(playerRating).block();
+            repository.save(player).block();
         });
 
     }
@@ -76,7 +79,7 @@ public class EloRatingService extends RatingService {
         return (int) (kFactor * (result - expectedScore));
     }
 
-    private int calculateKFactor(PlayerRating playerRating) {
+    private int calculateKFactor(Player playerRating) {
         return playerRating.getMatchesWon() + playerRating.getMatchesLost() <= K_FACTOR_MATCHES_THRESHOLD
                 ? K_FACTOR_NEW_PLAYER : K_FACTOR_ESTABLISHED_PLAYER;
 
