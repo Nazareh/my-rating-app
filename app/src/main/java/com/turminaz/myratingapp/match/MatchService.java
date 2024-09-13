@@ -92,7 +92,7 @@ class MatchService {
                 })
                 .peek(match -> match.getPlayers().forEach(matchPlayer -> matchPlayer.setName(playerService.findById(matchPlayer.getId())
                         .orElseThrow().getName())))
-                .map(match -> repository.save(match).block())
+//                .map(match -> repository.save(match).block())
                 .filter(Objects::nonNull)
                 .peek(match -> {
                     if (match.getStatus() == MatchStatus.APPROVED)

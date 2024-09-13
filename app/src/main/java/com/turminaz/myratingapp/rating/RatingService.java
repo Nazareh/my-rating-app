@@ -1,8 +1,5 @@
 package com.turminaz.myratingapp.rating;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.netflix.dgs.codegen.generated.types.MatchResponse;
-import com.netflix.dgs.codegen.generated.types.SetResponse;
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
@@ -10,25 +7,27 @@ import com.turminaz.myratingapp.model.Player;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.jms.annotation.JmsListener;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
+import org.springframework.jms.core.JmsTemplate;
 
 import static com.turminaz.myratingapp.utils.MatchUtils.getWinnerTeam;
 
-@Service
-@RequiredArgsConstructor
+
 @Log4j2
-public class RatingService {
+@RequiredArgsConstructor
+public abstract class RatingService {
 
-    private final PlayerRatingRepository repository;
+    public final RatingType ratingType;
+    public final JmsTemplate jmsTemplate;
 
-    private static final int INITIAL_RATING = 1500;
-    private static final int K_FACTOR_NEW_PLAYER = 40;
-    private static final int K_FACTOR_ESTABLISHED_PLAYER = 20;
-    private static final int K_FACTOR_MATCHES_THRESHOLD = 10;
+    protected final PlayerRatingRepository repository;
 
+    protected abstract void calculateRating(Match match);
 
+    @JmsListener(destination = "playerCreated")
+    private void receiveMatchCreated(Player player) {
+        log.info("Received {}", player);
+        repository.save(new PlayerRating().setId(player.getId())).block();
+    }
 
     @JmsListener(destination = "matchCreated")
     private void receiveMatchCreated(Match match) {
@@ -37,6 +36,8 @@ public class RatingService {
                 .map(matchPlayer -> updatePlayerStats(matchPlayer, match))
                 .forEach(player -> repository.save(player).block());
     }
+
+
 
     private PlayerRating updatePlayerStats(MatchPlayer matchPlayer, Match match) {
         var player = repository.findById(matchPlayer.getId()).blockOptional()
@@ -60,12 +61,6 @@ public class RatingService {
         }
 
         return player;
-    }
-
-    private int calculateKFactor(PlayerRating playerRating) {
-        return playerRating.getMatchesWon() + playerRating.getMatchesLost()  <= K_FACTOR_MATCHES_THRESHOLD
-                ? K_FACTOR_NEW_PLAYER : K_FACTOR_ESTABLISHED_PLAYER;
-
     }
 
 }

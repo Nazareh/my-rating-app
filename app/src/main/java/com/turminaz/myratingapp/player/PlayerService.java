@@ -4,14 +4,17 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.netflix.dgs.codegen.generated.types.PlayerResponse;
 import com.opencsv.bean.CsvToBeanBuilder;
+import com.turminaz.myratingapp.model.MatchStatus;
 import com.turminaz.myratingapp.model.Player;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,6 +26,7 @@ public class PlayerService {
     private final PlayerRepository repository;
     private final PlayerMapper mapper;
     private final FirebaseAuth firebaseAuth;
+    private final JmsTemplate jmsTemplate;
 
     public Optional<Player> findById(String id) {
         return repository.findById(id).blockOptional();
@@ -48,6 +52,8 @@ public class PlayerService {
                 .map(mapper::toPlayer)
                 .map(p -> repository.findByEmail(p.getEmail()).blockOptional()
                         .orElseGet(() -> repository.save(p).block()))
+                .filter(Objects::nonNull)
+                .peek(player -> jmsTemplate.convertAndSend("playerCreated", player))
                 .map(mapper::toPlayerDto)
                 .collect(Collectors.toSet());
     }

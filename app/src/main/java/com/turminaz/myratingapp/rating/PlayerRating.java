@@ -8,6 +8,10 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 
 @Document
 @Data
@@ -23,6 +27,7 @@ public class PlayerRating {
     private int matchesLost;
     private int gamesWon;
     private int gamesLost;
+    private Map<String, List<Rating>> ratings = new HashMap<>();
 
     private Instant lastUpdated;
     private String lastMatchId;
