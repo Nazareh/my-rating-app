@@ -31,15 +31,20 @@ public class PlayerService {
     private final JmsTemplate jmsTemplate;
 
     public Optional<Player> findById(String id) {
-        return repository.findById(id).blockOptional();
+        return repository.findById(id).or(() ->
+                Optional.of(createPlayer(id)));
     }
 
     public Player createPlayer(String id) {
-        try {
-            return repository.save(mapper.toPlayer(firebaseAuth.getUser(id))).block();
-        } catch (FirebaseAuthException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            var newPlayer = mapper.toPlayer(firebaseAuth.getUser(id));
+//            if (newPlayer == null) {
+//                newPlayer = new Player().setId(id);
+//            }
+            return repository.save(new Player().setId(id));
+//        } catch (FirebaseAuthException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     PlayerResponse onboardPlayer(String id) {
@@ -52,23 +57,20 @@ public class PlayerService {
                 .withType(RegisterPlayerDto.class)
                 .build().parse().stream()
                 .map(mapper::toPlayer)
-//                .map(p -> repository.findByEmail(p.getEmail()).blockOptional()
-//                        .orElseGet(() -> repository.save(p).block()))
-                .map(p -> repository.save(p).block())
-                .filter(Objects::nonNull)
+                .map(repository::save)
                 .map(mapper::toPlayerDto)
                 .collect(Collectors.toSet());
     }
 
     List<PlayerDto> getAllPlayers() {
-        return repository.findAll().collectList().block().stream().map(mapper::toPlayerDto).collect(Collectors.toList());
+        return repository.findAll().stream().map(mapper::toPlayerDto).collect(Collectors.toList());
     }
 
     List<Player> eraseAllRatings(){
-        return repository.findAll().collectList().blockOptional().orElseThrow().stream().map(
+        return repository.findAll().stream().map(
                 player -> {
                     player.setGamesLost(0).setGamesWon(0).setMatchesWon(0).setMatchesLost(0).setRatings(new HashMap<>());
-                   return repository.save(player).block();
+                   return repository.save(player);
                 })
                 .toList();
     }
@@ -78,11 +80,11 @@ public class PlayerService {
         log.info("Received match {}", match.getId());
         match.getPlayers().stream()
                 .map(matchPlayer -> updatePlayerStats(matchPlayer, match))
-                .forEach(player -> repository.save(player).block());
+                .forEach(repository::save);
     }
 
     private Player updatePlayerStats(MatchPlayer matchPlayer, Match match) {
-        var player = repository.findById(matchPlayer.getId()).blockOptional().orElseThrow();
+        var player = repository.findById(matchPlayer.getId()).orElseThrow();
         if (getWinnerTeam(match) == matchPlayer.getTeam())
             player.setMatchesWon(player.getMatchesWon() + 1);
         else

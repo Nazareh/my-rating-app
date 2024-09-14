@@ -33,7 +33,7 @@ public class EloRatingService extends RatingService {
         log.info("Calculating {} rating", ratingType);
 
         match.getPlayers().forEach(p -> {
-            var player = repository.findById(p.getId()).blockOptional().orElseThrow();
+            var player = repository.findById(p.getId()).orElseThrow();
 
             var ratings = player.getRatings();
 
@@ -72,7 +72,7 @@ public class EloRatingService extends RatingService {
                 throw new IllegalArgumentException(String.format("A future rating already exists. LastRatingDate=%s MatchId=%s MatchDate=%s",
                         lastRating.getDateTime(), match.getId(), match.getStartTime()));
             }
-            repository.save(player).block();
+            repository.save(player);
         });
 
     }

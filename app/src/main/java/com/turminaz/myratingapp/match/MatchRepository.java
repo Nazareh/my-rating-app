@@ -1,13 +1,13 @@
 package com.turminaz.myratingapp.match;
 
-import com.google.cloud.spring.data.firestore.FirestoreReactiveRepository;
 import com.turminaz.myratingapp.model.Match;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Flux;
 
 import java.time.Instant;
+import java.util.List;
 
 @Repository
-interface MatchRepository extends FirestoreReactiveRepository<Match> {
-    Flux<Match> findAllByStartTimeGreaterThan(Instant instant);
+interface MatchRepository extends MongoRepository<Match, String> {
+    List<Match> findAllByStartTimeGreaterThan(Instant instant);
 }

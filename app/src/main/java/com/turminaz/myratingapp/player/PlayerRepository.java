@@ -1,12 +1,13 @@
 package com.turminaz.myratingapp.player;
 
-import com.google.cloud.spring.data.firestore.FirestoreReactiveRepository;
 import com.turminaz.myratingapp.model.Player;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
+
+import java.util.Optional;
 
 @Repository
-public interface PlayerRepository extends FirestoreReactiveRepository<Player> {
+public interface PlayerRepository extends MongoRepository<Player, String> {
 
-    Mono<Player> findByEmail(String email);
+    Optional<Player> findByEmail(String email);
 }

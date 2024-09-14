@@ -17,5 +17,11 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
+  data:
+    mongodb:
+      host: localhost
+      port: 37681
+
+de.flapdoodle.mongodb.embedded.version: 6.0.5
 server:
   port: 8079

@@ -40,7 +40,8 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
 	implementation platform("com.google.cloud:spring-cloud-gcp-dependencies:5.1.0")
-	implementation("com.google.cloud:spring-cloud-gcp-starter-data-firestore")
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	implementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring3x:4.16.1'
 	implementation 'com.google.firebase:firebase-admin:9.2.0'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'

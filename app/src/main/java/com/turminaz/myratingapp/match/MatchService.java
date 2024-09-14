@@ -79,7 +79,7 @@ class MatchService {
                 .sorted(Comparator.comparing(PostMatchDto::getStartTime))
                 .map(mapper::toMatch)
                 .peek(match -> {
-                    var allByStartTime = repository.findAllByStartTimeGreaterThan(match.getStartTime().minus(1, ChronoUnit.HOURS)).collect(Collectors.toList()).block();
+                    var allByStartTime = repository.findAllByStartTimeGreaterThan(match.getStartTime().minus(1, ChronoUnit.HOURS));
 
                     var players = match.getPlayers().stream().map(MatchPlayer::getId).collect(Collectors.toSet());
                     if (players.size() != 4) {
@@ -99,8 +99,7 @@ class MatchService {
                             matchPlayer.setName(player.getName());
                         })
                 )
-//                .map(match -> repository.save(match).block())
-                .filter(Objects::nonNull)
+                .map(repository::save)
                 .peek(match -> {
                     if (match.getStatus() == MatchStatus.APPROVED)
                         jmsTemplate.convertAndSend("matchCreated", match);
@@ -110,7 +109,7 @@ class MatchService {
     }
 
     List<MatchDto> getAllMatches() {
-        return repository.findAll().collectList().block().stream()
+        return repository.findAll().stream()
                 .map(mapper::toMatchDto)
                 .collect(Collectors.toList());
     }
