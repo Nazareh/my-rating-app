@@ -7,7 +7,6 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
-import com.turminaz.myratingapp.model.MatchStatus;
 import com.turminaz.myratingapp.model.Player;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -17,10 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.turminaz.myratingapp.utils.MatchUtils.getWinnerTeam;
@@ -56,8 +52,9 @@ public class PlayerService {
                 .withType(RegisterPlayerDto.class)
                 .build().parse().stream()
                 .map(mapper::toPlayer)
-                .map(p -> repository.findByEmail(p.getEmail()).blockOptional()
-                        .orElseGet(() -> repository.save(p).block()))
+//                .map(p -> repository.findByEmail(p.getEmail()).blockOptional()
+//                        .orElseGet(() -> repository.save(p).block()))
+                .map(p -> repository.save(p).block())
                 .filter(Objects::nonNull)
                 .map(mapper::toPlayerDto)
                 .collect(Collectors.toSet());
@@ -65,6 +62,15 @@ public class PlayerService {
 
     List<PlayerDto> getAllPlayers() {
         return repository.findAll().collectList().block().stream().map(mapper::toPlayerDto).collect(Collectors.toList());
+    }
+
+    List<Player> eraseAllRatings(){
+        return repository.findAll().collectList().blockOptional().orElseThrow().stream().map(
+                player -> {
+                    player.setGamesLost(0).setGamesWon(0).setMatchesWon(0).setMatchesLost(0).setRatings(new HashMap<>());
+                   return repository.save(player).block();
+                })
+                .toList();
     }
 
     @JmsListener(destination = "matchCreated")

@@ -41,17 +41,30 @@ public class EloRatingService extends RatingService {
                     ? INITIAL_RATING
                     : Integer.parseInt(ratings.get(ratingType.name()).getLast().getValue());
 
-            var newRatingValue = calculateElo(lastRatingValue * 2, 3000, getWinnerTeam(match) == p.getTeam(),
+            var partnerRating = match.getPlayers().stream()
+                    .filter(it -> it.getTeam().equals(p.getTeam()))
+                    .filter(it -> !it.getId().equals(p.getId()))
+                    .map(it -> it.getRatings() == null || !it.getRatings().containsKey(ratingType.name())
+                            ? INITIAL_RATING
+                            : Integer.parseInt(it.getRatings().get(ratingType.name()).getValue()))
+                    .reduce(0, Integer::sum);
+
+            var combinedRating = lastRatingValue + partnerRating;
+            var opponentsRating = match.getPlayers().stream().filter(it -> it.getTeam() != p.getTeam())
+                    .map(it ->
+                            (it.getRatings() == null || it.getRatings().isEmpty())
+                            ? INITIAL_RATING
+                                    : Integer.parseInt(it.getRatings().get(ratingType.name()).getValue()))
+                    .reduce(0, Integer::sum);
+
+            var newRatingValue = calculateElo(combinedRating, opponentsRating, getWinnerTeam(match) == p.getTeam(),
                     calculateKFactor(player)) / 2 + lastRatingValue;
 
-            if (ratings.isEmpty()){
+            if (ratings.isEmpty()) {
                 ratings.put(this.ratingType.name(), new ArrayList<>());
-
             }
 
-            ratings.get(this.ratingType.name())
-                    .add(new Rating(this.ratingType.name(), match.getStartTime(), String.valueOf(newRatingValue))
-            );
+            ratings.get(this.ratingType.name()).add(new Rating(this.ratingType.name(), match.getId(), match.getStartTime(), String.valueOf(newRatingValue)));
 
             var lastRating = ratings.get(this.ratingType.name()).getLast();
 

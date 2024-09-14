@@ -13,11 +13,13 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.turminaz.myratingapp.utils.MatchUtils.isMatchResultValid;
-import static com.turminaz.myratingapp.utils.MatchUtils.isSetResultValid;
 
 @Service
 @Slf4j
@@ -90,8 +92,13 @@ class MatchService {
                         match.setRejectedReason(validMatch ? null : "Another match already exists for the same time or future");
                     }
                 })
-                .peek(match -> match.getPlayers().forEach(matchPlayer -> matchPlayer.setName(playerService.findById(matchPlayer.getId())
-                        .orElseThrow().getName())))
+                .peek(match -> match.getPlayers()
+                        .forEach(matchPlayer -> {
+                            var player = playerService.findById(matchPlayer.getId()).orElseThrow();
+                            player.getRatings().forEach((key, value) -> matchPlayer.getRatings().put(key, value.getLast()));
+                            matchPlayer.setName(player.getName());
+                        })
+                )
 //                .map(match -> repository.save(match).block())
                 .filter(Objects::nonNull)
                 .peek(match -> {

@@ -5,11 +5,6 @@ import com.turminaz.myratingapp.model.Player;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-
-
 @Repository
 public interface PlayerRepository extends FirestoreReactiveRepository<Player> {
 

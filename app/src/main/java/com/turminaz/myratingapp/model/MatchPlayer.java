@@ -6,6 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,5 +17,6 @@ public class MatchPlayer {
     private String id;
     private String name;
     private Team team;
+    private Map<String, Rating> ratings = new HashMap<>();
     private MatchStatus status;
 }
