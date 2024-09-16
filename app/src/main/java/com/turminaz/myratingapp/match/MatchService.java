@@ -26,7 +26,7 @@ import static com.turminaz.myratingapp.utils.MatchUtils.isMatchResultValid;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-class MatchService {
+public class MatchService {
 
     private final MatchRepository repository;
     private final PlayerService playerService;
@@ -72,6 +72,12 @@ class MatchService {
 //
 //    }
 
+
+    public void republishedApprovedMatches() {
+        repository.findAllByStatus(MatchStatus.APPROVED)
+                .forEach(match -> jmsTemplate.convertAndSend(Topics.MATCH_CREATED, match));
+    }
+
     List<MatchDto> getAllMatches() {
         return repository.findAll().stream()
                 .map(mapper::toMatchDto)
@@ -84,20 +90,17 @@ class MatchService {
 
     private Set<MatchDto> processMatches(Stream<Match> matchStream) {
 
-        var matches = matchStream
+        return matchStream
                 .sorted(Comparator.comparing(Match::getStartTime))
                 .peek(this::approveOrRejectMatch)
                 .peek(match -> match.getPlayers().forEach(this::updateMatchPlayerDetails))
                 .map(repository::save)
-                .collect(Collectors.toSet());
-
-        return matches.stream()
-                .sorted(Comparator.comparing(Match::getStartTime))
-                .peek((match -> {
+                .peek(match -> {
                     if (match.getStatus() == MatchStatus.APPROVED)
                         jmsTemplate.convertAndSend(Topics.MATCH_CREATED, match);
                 })
-        ).map(mapper::toMatchDto).collect(Collectors.toSet());
+                .map(mapper::toMatchDto)
+                .collect(Collectors.toSet());
     }
 
     private void updateMatchPlayerDetails(MatchPlayer matchPlayer) {
@@ -129,6 +132,7 @@ class MatchService {
                 .sorted(Comparator.comparing(PostMatchDto::getStartTime))
                 .map(mapper::toMatch);
     }
+
 
 
 //

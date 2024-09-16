@@ -28,8 +28,4 @@ class PlayerController {
         return service.getAllPlayers();
     }
 
-    @PostMapping("/erase-ratings")
-    List<Player> eraseRatings(){
-       return service.eraseAllRatings();
-    }
 }

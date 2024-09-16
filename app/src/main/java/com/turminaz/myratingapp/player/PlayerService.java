@@ -3,6 +3,7 @@ package com.turminaz.myratingapp.player;
 import com.google.firebase.auth.FirebaseAuth;
 import com.netflix.dgs.codegen.generated.types.PlayerResponse;
 import com.opencsv.bean.CsvToBeanBuilder;
+import com.turminaz.myratingapp.Topics;
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
@@ -46,6 +47,12 @@ public class PlayerService {
 //        }
     }
 
+    public void eraseAllRatings(){
+        repository.findAll().forEach(
+                        player ->
+                            repository.save(player.setGamesLost(0).setGamesWon(0).setMatchesWon(0).setMatchesLost(0).setRatings(new HashMap<>())));
+    }
+
     PlayerResponse onboardPlayer(String id) {
         return mapper.toPlayerResponse(createPlayer(id));
     }
@@ -65,16 +72,7 @@ public class PlayerService {
         return repository.findAll().stream().map(mapper::toPlayerDto).collect(Collectors.toList());
     }
 
-    List<Player> eraseAllRatings(){
-        return repository.findAll().stream().map(
-                player -> {
-                    player.setGamesLost(0).setGamesWon(0).setMatchesWon(0).setMatchesLost(0).setRatings(new HashMap<>());
-                   return repository.save(player);
-                })
-                .toList();
-    }
-
-    @JmsListener(destination = "matchCreated")
+    @JmsListener(destination = Topics.MATCH_CREATED)
     private void receiveMatchCreated(Match match) {
         match.getPlayers().stream()
                 .map(matchPlayer -> updatePlayerStats(matchPlayer, match))
