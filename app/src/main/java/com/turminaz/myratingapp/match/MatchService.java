@@ -1,7 +1,9 @@
 package com.turminaz.myratingapp.match;
 
 import com.opencsv.bean.CsvToBeanBuilder;
+import com.turminaz.myratingapp.Topics;
 import com.turminaz.myratingapp.config.AuthenticationFacade;
+import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
 import com.turminaz.myratingapp.model.MatchStatus;
 import com.turminaz.myratingapp.player.PlayerService;
@@ -15,9 +17,9 @@ import java.io.InputStreamReader;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.turminaz.myratingapp.utils.MatchUtils.isMatchResultValid;
 
@@ -70,49 +72,65 @@ class MatchService {
 //
 //    }
 
-    Set<MatchDto> uploadMatchFromCsv(InputStream inputStream) {
-
-
-        return new CsvToBeanBuilder<PostMatchDto>(new InputStreamReader(inputStream))
-                .withType(PostMatchDto.class)
-                .build().parse().stream()
-                .sorted(Comparator.comparing(PostMatchDto::getStartTime))
-                .map(mapper::toMatch)
-                .peek(match -> {
-                    var allByStartTime = repository.findAllByStartTimeGreaterThan(match.getStartTime().minus(1, ChronoUnit.HOURS));
-
-                    var players = match.getPlayers().stream().map(MatchPlayer::getId).collect(Collectors.toSet());
-                    if (players.size() != 4) {
-                        match.setStatus(MatchStatus.REJECTED);
-                        match.setRejectedReason("Four distinct players are needed");
-                    } else {
-                        assert allByStartTime != null;
-                        var validMatch = allByStartTime.stream().noneMatch(m -> m.getPlayers().stream().map(MatchPlayer::getId).anyMatch(players::contains));
-                        match.setStatus(validMatch && isMatchResultValid(match) ? MatchStatus.APPROVED : MatchStatus.REJECTED);
-                        match.setRejectedReason(validMatch ? null : "Another match already exists for the same time or future");
-                    }
-                })
-                .peek(match -> match.getPlayers()
-                        .forEach(matchPlayer -> {
-                            var player = playerService.findById(matchPlayer.getId()).orElseThrow();
-                            player.getRatings().forEach((key, value) -> matchPlayer.getRatings().put(key, value.getLast()));
-                            matchPlayer.setName(player.getName());
-                        })
-                )
-                .map(repository::save)
-                .peek(match -> {
-                    if (match.getStatus() == MatchStatus.APPROVED)
-                        jmsTemplate.convertAndSend("matchCreated", match);
-                })
-                .map(mapper::toMatchDto)
-                .collect(Collectors.toSet());
-    }
-
     List<MatchDto> getAllMatches() {
         return repository.findAll().stream()
                 .map(mapper::toMatchDto)
                 .collect(Collectors.toList());
     }
+
+    Set<MatchDto> uploadMatchFromCsv(InputStream inputStream) {
+        return processMatches(convertToMstchStream(inputStream));
+    }
+
+    private Set<MatchDto> processMatches(Stream<Match> matchStream) {
+
+        var matches = matchStream
+                .sorted(Comparator.comparing(Match::getStartTime))
+                .peek(this::approveOrRejectMatch)
+                .peek(match -> match.getPlayers().forEach(this::updateMatchPlayerDetails))
+                .map(repository::save)
+                .collect(Collectors.toSet());
+
+        return matches.stream()
+                .sorted(Comparator.comparing(Match::getStartTime))
+                .peek((match -> {
+                    if (match.getStatus() == MatchStatus.APPROVED)
+                        jmsTemplate.convertAndSend(Topics.MATCH_CREATED, match);
+                })
+        ).map(mapper::toMatchDto).collect(Collectors.toSet());
+    }
+
+    private void updateMatchPlayerDetails(MatchPlayer matchPlayer) {
+        var player = playerService.findByIdOrCreate(matchPlayer.getId()).orElseThrow();
+        matchPlayer.setName(player.getName());
+    }
+
+    private void approveOrRejectMatch(Match match) {
+        var players = match.getPlayers().stream().map(MatchPlayer::getId).collect(Collectors.toSet());
+        if (players.size() != 4) {
+            match.setStatus(MatchStatus.REJECTED);
+            match.setRejectedReason("Four distinct players are needed");
+        } else {
+            var allByStartTime = repository.findAllByStartTimeGreaterThan(match.getStartTime().minus(1, ChronoUnit.HOURS));
+            var validMatch = allByStartTime.stream()
+                    .noneMatch(m -> m.getPlayers().stream().map(MatchPlayer::getId).anyMatch(players::contains));
+            match.setStatus(validMatch && isMatchResultValid(match)
+                    ? MatchStatus.APPROVED : MatchStatus.REJECTED);
+            match.setRejectedReason(validMatch
+                    ? null : "Another match already exists for the same time or future");
+        }
+
+    }
+
+    private Stream<Match> convertToMstchStream(InputStream inputStream) {
+        return new CsvToBeanBuilder<PostMatchDto>(new InputStreamReader(inputStream))
+                .withType(PostMatchDto.class)
+                .build().parse().stream()
+                .sorted(Comparator.comparing(PostMatchDto::getStartTime))
+                .map(mapper::toMatch);
+    }
+
+
 //
 //    private MatchResponse approveMatchForPlayerAndSave(Match match) {
 //        log.info("Approving match {}", match);

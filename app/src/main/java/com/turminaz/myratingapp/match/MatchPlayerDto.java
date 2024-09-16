@@ -16,6 +16,5 @@ class MatchPlayerDto {
     private String id;
     private String name;
     private Team team;
-    private Map<String, Rating> ratings = new HashMap<>();
     private MatchStatus status;
 }

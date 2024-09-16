@@ -1,12 +1,14 @@
 package com.turminaz.myratingapp.rating;
 
 import com.turminaz.myratingapp.model.Match;
+import com.turminaz.myratingapp.model.MatchPlayer;
 import com.turminaz.myratingapp.model.Player;
 import com.turminaz.myratingapp.player.PlayerRepository;
 import com.turminaz.myratingapp.model.Rating;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.jms.annotation.JmsListener;
-import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,7 +17,11 @@ import static com.turminaz.myratingapp.utils.MatchUtils.getWinnerTeam;
 
 @Service
 @Log4j2
-public class EloRatingService extends RatingService {
+@RequiredArgsConstructor
+public class EloRatingService {
+
+    private final RatingType ratingType = RatingType.ELO;
+    private final PlayerRepository repository;
 
     private static final int INITIAL_RATING = 1500;
     private static final int K_FACTOR_NEW_PLAYER = 40;
@@ -23,18 +29,15 @@ public class EloRatingService extends RatingService {
     private static final int K_FACTOR_MATCHES_THRESHOLD = 10;
 
 
-    public EloRatingService(PlayerRepository playerRepository, JmsTemplate jmsTemplate) {
-        super(RatingType.ELO, jmsTemplate, playerRepository);
-    }
-
-    @Override
     @JmsListener(destination = "matchCreated")
     public void calculateRating(Match match) {
         log.info("Calculating {} rating", ratingType);
 
-        match.getPlayers().forEach(p -> {
-            var player = repository.findById(p.getId()).orElseThrow();
-
+        match.getPlayers().forEach(matchPlayer -> {
+            var player = repository.findById(matchPlayer.getId()).orElseThrow();
+            if (matchPlayer.getId().equals("pawel")) {
+                System.out.println("hello me");
+            }
             var ratings = player.getRatings();
 
             var lastRatingValue = ratings.isEmpty()
@@ -42,39 +45,50 @@ public class EloRatingService extends RatingService {
                     : Integer.parseInt(ratings.get(ratingType.name()).getLast().getValue());
 
             var partnerRating = match.getPlayers().stream()
-                    .filter(it -> it.getTeam().equals(p.getTeam()))
-                    .filter(it -> !it.getId().equals(p.getId()))
-                    .map(it -> it.getRatings() == null || !it.getRatings().containsKey(ratingType.name())
-                            ? INITIAL_RATING
-                            : Integer.parseInt(it.getRatings().get(ratingType.name()).getValue()))
+                    .filter(it -> it.getTeam().equals(matchPlayer.getTeam()))
+                    .map(MatchPlayer::getId)
+                    .filter(id -> !id.equals(matchPlayer.getId()))
+                    .map(repository::findById)
+                    .map(Optional::orElseThrow)
+                    .map(p -> getLastRating(match, p))
                     .reduce(0, Integer::sum);
 
-            var combinedRating = lastRatingValue + partnerRating;
-            var opponentsRating = match.getPlayers().stream().filter(it -> it.getTeam() != p.getTeam())
-                    .map(it ->
-                            (it.getRatings() == null || it.getRatings().isEmpty())
-                            ? INITIAL_RATING
-                                    : Integer.parseInt(it.getRatings().get(ratingType.name()).getValue()))
-                    .reduce(0, Integer::sum);
+            var teamRatingAvg = Math.ceilDiv((lastRatingValue + partnerRating), 2);
+            var opponentsRatingAvg = Math.ceilDiv(
+                    match.getPlayers().stream()
+                            .filter(it -> it.getTeam() != matchPlayer.getTeam())
+                            .map(MatchPlayer::getId)
+                            .map(repository::findById)
+                            .map(Optional::orElseThrow)
+                            .map(p -> getLastRating(match, p))
+                            .reduce(0, Integer::sum), 2);
 
-            var newRatingValue = calculateElo(combinedRating, opponentsRating, getWinnerTeam(match) == p.getTeam(),
-                    calculateKFactor(player)) / 2 + lastRatingValue;
+            var newRatingValue = calculateElo(teamRatingAvg, opponentsRatingAvg, getWinnerTeam(match) == matchPlayer.getTeam(),
+                    calculateKFactor(player)) + lastRatingValue;
 
             if (ratings.isEmpty()) {
                 ratings.put(this.ratingType.name(), new ArrayList<>());
             }
 
             ratings.get(this.ratingType.name()).add(new Rating(this.ratingType.name(), match.getId(), match.getStartTime(), String.valueOf(newRatingValue)));
-
-            var lastRating = ratings.get(this.ratingType.name()).getLast();
-
-            if (lastRating.getDateTime().isAfter(match.getStartTime())) {
-                throw new IllegalArgumentException(String.format("A future rating already exists. LastRatingDate=%s MatchId=%s MatchDate=%s",
-                        lastRating.getDateTime(), match.getId(), match.getStartTime()));
+            if (matchPlayer.getId().equals("pawel")) {
+                System.out.println("hello me");
             }
             repository.save(player);
+
         });
 
+    }
+
+    @NotNull
+    private Integer getLastRating(Match match, Player p) {
+        if (p.getRatings() == null || !p.getRatings().containsKey(ratingType.name()))
+            return INITIAL_RATING;
+        var filteredRatings = p.getRatings().get(ratingType.name()).stream()
+                .filter(rating -> !rating.getMatchId().equals(match.getId())).toList();
+        return filteredRatings.isEmpty()
+                ? INITIAL_RATING
+                : Integer.parseInt(filteredRatings.getLast().getValue());
     }
 
     private int calculateElo(int playerRating, int opponentRating, boolean hasPlayerWon, int kFactor) {
@@ -95,6 +109,5 @@ public class EloRatingService extends RatingService {
     private int calculateKFactor(Player playerRating) {
         return playerRating.getMatchesWon() + playerRating.getMatchesLost() <= K_FACTOR_MATCHES_THRESHOLD
                 ? K_FACTOR_NEW_PLAYER : K_FACTOR_ESTABLISHED_PLAYER;
-
     }
 }

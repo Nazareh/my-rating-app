@@ -1,7 +1,6 @@
 package com.turminaz.myratingapp.player;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
 import com.netflix.dgs.codegen.generated.types.PlayerResponse;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.turminaz.myratingapp.match.Team;
@@ -30,7 +29,7 @@ public class PlayerService {
     private final FirebaseAuth firebaseAuth;
     private final JmsTemplate jmsTemplate;
 
-    public Optional<Player> findById(String id) {
+    public Optional<Player> findByIdOrCreate(String id) {
         return repository.findById(id).or(() ->
                 Optional.of(createPlayer(id)));
     }
@@ -77,7 +76,6 @@ public class PlayerService {
 
     @JmsListener(destination = "matchCreated")
     private void receiveMatchCreated(Match match) {
-        log.info("Received match {}", match.getId());
         match.getPlayers().stream()
                 .map(matchPlayer -> updatePlayerStats(matchPlayer, match))
                 .forEach(repository::save);

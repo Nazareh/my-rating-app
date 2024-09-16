@@ -29,12 +29,12 @@ public class MatchUtils {
     public static Team getWinnerTeam(Match match) {
         var winnerSet1 = match.getSet1Team1Score() > match.getSet1Team2Score() ? Team.TEAM_1 : Team.TEAM_2;
 
-        if (isSetResultValid(match.getSet2Team1Score(), match.getSet3Team1Score())) {
+        if (isSetResultValid(match.getSet2Team1Score(), match.getSet2Team2Score())) {
             var winnerSet2 = match.getSet2Team1Score() > match.getSet2Team2Score() ? Team.TEAM_1 : Team.TEAM_2;
-            if (winnerSet1 == winnerSet2) return Team.TEAM_1;
+            if (winnerSet1 == winnerSet2) return winnerSet1;
         }
 
-        return match.getSet1Team1Score() > match.getSet1Team2Score() ? Team.TEAM_1 : Team.TEAM_2;
+        return match.getSet3Team1Score() > match.getSet3Team2Score() ? Team.TEAM_1 : Team.TEAM_2;
 
     }
 }
