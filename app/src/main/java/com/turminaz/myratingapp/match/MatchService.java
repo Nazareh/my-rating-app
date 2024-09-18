@@ -17,7 +17,6 @@ import java.io.InputStreamReader;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -73,9 +72,13 @@ public class MatchService {
 //    }
 
 
-    public void republishedApprovedMatches() {
+    public void republishedApprovedMatches () {
         repository.findAllByStatus(MatchStatus.APPROVED)
                 .forEach(match -> jmsTemplate.convertAndSend(Topics.MATCH_CREATED, match));
+    }
+
+    MatchDto postMatch(PostMatchDto matchDto) {
+        return processMatches(Stream.of(mapper.toMatch(matchDto))).getFirst();
     }
 
     List<MatchDto> getAllMatches() {
@@ -84,15 +87,15 @@ public class MatchService {
                 .collect(Collectors.toList());
     }
 
-    Set<MatchDto> uploadMatchFromCsv(InputStream inputStream) {
-        return processMatches(convertToMstchStream(inputStream));
+    List<MatchDto> uploadMatchFromCsv(InputStream inputStream) {
+        return processMatches(convertToMatchStream(inputStream));
     }
 
-    private Set<MatchDto> processMatches(Stream<Match> matchStream) {
+    private List<MatchDto> processMatches(Stream<Match> matchStream) {
 
         return matchStream
                 .sorted(Comparator.comparing(Match::getStartTime))
-                .peek(this::approveOrRejectMatch)
+                .peek(this::updateMatchStatus)
                 .peek(match -> match.getPlayers().forEach(this::updateMatchPlayerDetails))
                 .map(repository::save)
                 .peek(match -> {
@@ -100,7 +103,7 @@ public class MatchService {
                         jmsTemplate.convertAndSend(Topics.MATCH_CREATED, match);
                 })
                 .map(mapper::toMatchDto)
-                .collect(Collectors.toSet());
+                .toList();
     }
 
     private void updateMatchPlayerDetails(MatchPlayer matchPlayer) {
@@ -108,7 +111,9 @@ public class MatchService {
         matchPlayer.setName(player.getName());
     }
 
-    private void approveOrRejectMatch(Match match) {
+    private void updateMatchStatus(Match match) {
+        var user = authenticationFacade.authenticatedUser();
+
         var players = match.getPlayers().stream().map(MatchPlayer::getId).collect(Collectors.toSet());
         if (players.size() != 4) {
             match.setStatus(MatchStatus.REJECTED);
@@ -125,7 +130,7 @@ public class MatchService {
 
     }
 
-    private Stream<Match> convertToMstchStream(InputStream inputStream) {
+    private Stream<Match> convertToMatchStream(InputStream inputStream) {
         return new CsvToBeanBuilder<PostMatchDto>(new InputStreamReader(inputStream))
                 .withType(PostMatchDto.class)
                 .build().parse().stream()
