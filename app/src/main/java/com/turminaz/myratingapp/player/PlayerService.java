@@ -1,6 +1,7 @@
 package com.turminaz.myratingapp.player;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.netflix.dgs.codegen.generated.types.PlayerResponse;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.turminaz.myratingapp.Topics;
@@ -11,7 +12,6 @@ import com.turminaz.myratingapp.model.Player;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.jms.annotation.JmsListener;
-import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -26,25 +26,12 @@ import static com.turminaz.myratingapp.utils.MatchUtils.getWinnerTeam;
 @Log4j2
 public class PlayerService {
     private final PlayerRepository repository;
-    private final PlayerMapper mapper;
     private final FirebaseAuth firebaseAuth;
-    private final JmsTemplate jmsTemplate;
+    private final PlayerMapper mapper;
 
-    public Optional<Player> findByIdOrCreate(String id) {
+    public final Optional<Player> findByIdOrCreate(String id) {
         return repository.findById(id).or(() ->
-                Optional.of(createPlayer(id)));
-    }
-
-    public Player createPlayer(String id) {
-//        try {
-//            var newPlayer = mapper.toPlayer(firebaseAuth.getUser(id));
-//            if (newPlayer == null) {
-//                newPlayer = new Player().setId(id);
-//            }
-            return repository.save(new Player().setId(id));
-//        } catch (FirebaseAuthException e) {
-//            throw new RuntimeException(e);
-//        }
+                Optional.of(repository.save(new Player().setId(id))));
     }
 
     public void eraseAllRatings(){
@@ -53,12 +40,17 @@ public class PlayerService {
                             repository.save(player.setGamesLost(0).setGamesWon(0).setMatchesWon(0).setMatchesLost(0).setRatings(new HashMap<>())));
     }
 
-    PlayerResponse onboardPlayer(String id) {
-        return mapper.toPlayerResponse(createPlayer(id));
+    PlayerResponse onboardPlayer(String userUid) throws FirebaseAuthException {
+        var userRecord = firebaseAuth.getUser(userUid);
+        var existingPlayer = repository.findByEmail(userRecord.getEmail());
+        var savedPlayer = repository.save(existingPlayer.isPresent()
+                ? existingPlayer.get().setUserUid(userUid).setName(userRecord.getDisplayName())
+                : mapper.toPlayer(userRecord)
+        );
+        return mapper.toPlayerResponse(savedPlayer);
     }
 
     Set<PlayerDto> registerPlayersFromCsv(InputStream inputStream) {
-
         return new CsvToBeanBuilder<RegisterPlayerDto>(new InputStreamReader(inputStream))
                 .withType(RegisterPlayerDto.class)
                 .build().parse().stream()
@@ -70,6 +62,12 @@ public class PlayerService {
 
     List<PlayerDto> getAllPlayers() {
         return repository.findAll().stream().map(mapper::toPlayerDto).collect(Collectors.toList());
+    }
+
+    PlayerDto getPlayerById(String id) {
+        return repository.findById(id)
+                .map(mapper::toPlayerDto)
+                .orElseThrow();
     }
 
     @JmsListener(destination = Topics.MATCH_CREATED)
