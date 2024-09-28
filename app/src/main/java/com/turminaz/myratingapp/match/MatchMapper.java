@@ -1,13 +1,18 @@
 package com.turminaz.myratingapp.match;
 
+import com.opencsv.bean.CsvToBeanBuilder;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.*;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 interface MatchMapper {
@@ -39,5 +44,13 @@ interface MatchMapper {
                 .setSet2Team2Score(dto.getSet2Team2Score())
                 .setSet3Team1Score(dto.getSet3Team1Score())
                 .setSet3Team2Score(dto.getSet3Team2Score());
+    }
+
+    default Stream<Match> toMatchStream(InputStream inputStream) {
+        return new CsvToBeanBuilder<PostMatchDto>(new InputStreamReader(inputStream))
+                .withType(PostMatchDto.class)
+                .build().parse().stream()
+                .sorted(Comparator.comparing(PostMatchDto::getStartTime))
+                .map(this::toMatch);
     }
 }

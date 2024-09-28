@@ -29,15 +29,14 @@ public class PlayerService {
     private final FirebaseAuth firebaseAuth;
     private final PlayerMapper mapper;
 
-    public final Optional<Player> findByIdOrCreate(String id) {
-        return repository.findById(id).or(() ->
-                Optional.of(repository.save(new Player().setId(id))));
+    public final Player findByIdOrCreate(String id) {
+        return repository.findById(id).or(() -> Optional.of(repository.save(new Player().setId(id)))).get();
     }
 
-    public void eraseAllRatings(){
+    public void eraseAllRatings() {
         repository.findAll().forEach(
-                        player ->
-                            repository.save(player.setGamesLost(0).setGamesWon(0).setMatchesWon(0).setMatchesLost(0).setRatings(new HashMap<>())));
+                player ->
+                        repository.save(player.setGamesLost(0).setGamesWon(0).setMatchesWon(0).setMatchesLost(0).setRatings(new HashMap<>())));
     }
 
     PlayerResponse onboardPlayer(String userUid) throws FirebaseAuthException {
