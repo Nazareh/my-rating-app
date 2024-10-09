@@ -24,9 +24,7 @@ public class EloRatingService {
     private final PlayerRepository repository;
 
     private static final int INITIAL_RATING = 1500;
-    private static final int K_FACTOR_NEW_PLAYER = 40;
-    private static final int K_FACTOR_ESTABLISHED_PLAYER = 20;
-    private static final int K_FACTOR_MATCHES_THRESHOLD = 10;
+    private static final int K_FACTOR = 40;
 
 
     @JmsListener(destination = "matchCreated")
@@ -63,8 +61,9 @@ public class EloRatingService {
                             .map(p -> getLastRating(match, p))
                             .reduce(0, Integer::sum), 2);
 
+            var winRatio = calculateGameWinRatio(match);
             var newRatingValue = calculateElo(teamRatingAvg, opponentsRatingAvg, getWinnerTeam(match) == matchPlayer.getTeam(),
-                    calculateKFactor(player)) + lastRatingValue;
+                    calculateKFactor(winRatio)) + lastRatingValue;
 
             if (ratings.isEmpty()) {
                 ratings.put(this.ratingType.name(), new ArrayList<>());
@@ -75,8 +74,15 @@ public class EloRatingService {
                 System.out.println("hello me");
             }
             repository.save(player);
-
         });
+
+    }
+
+    private float calculateGameWinRatio(Match match) {
+        var team1Games = match.getSet1Team1Score() + match.getSet2Team1Score() + match.getSet3Team1Score();
+        var team2Games = match.getSet1Team2Score() + match.getSet2Team2Score() + match.getSet3Team2Score();
+
+        return 1 - (float) Math.min(team1Games, team2Games) / Math.max(team1Games, team2Games) ;
 
     }
 
@@ -106,8 +112,7 @@ public class EloRatingService {
         return (int) (kFactor * (result - expectedScore));
     }
 
-    private int calculateKFactor(Player playerRating) {
-        return playerRating.getMatchesWon() + playerRating.getMatchesLost() <= K_FACTOR_MATCHES_THRESHOLD
-                ? K_FACTOR_NEW_PLAYER : K_FACTOR_ESTABLISHED_PLAYER;
+    private int calculateKFactor(float winRation) {
+        return Math.round(K_FACTOR * winRation);
     }
 }
