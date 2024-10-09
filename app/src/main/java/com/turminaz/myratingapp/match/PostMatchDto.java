@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 public class PostMatchDto {
-   @CsvDate(value = "yyyy-MM-ddTHH:mm")
+   @CsvDate(value = "yyyy-MM-dd'T'HH:mm")
    private LocalDateTime startTime;
    private String team1Player1;
    private String team1Player2;

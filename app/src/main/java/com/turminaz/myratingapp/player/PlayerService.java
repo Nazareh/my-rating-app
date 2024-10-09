@@ -29,8 +29,14 @@ public class PlayerService {
     private final FirebaseAuth firebaseAuth;
     private final PlayerMapper mapper;
 
-    public final Player findByIdOrCreate(String id) {
-        return repository.findById(id).or(() -> Optional.of(repository.save(new Player().setId(id)))).get();
+    public final Player findById(String id) {
+        return repository.findById(id).orElseThrow();
+    }
+
+    public final Player findByEmailOrCreate(String email) {
+        return repository.findByEmail(email)
+                .or(() -> Optional.of(
+                        repository.save(new Player().setEmail(email).setName(email.split("@")[0])))).get();
     }
 
     public void eraseAllRatings() {

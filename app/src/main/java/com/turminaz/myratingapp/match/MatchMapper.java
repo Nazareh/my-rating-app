@@ -18,10 +18,6 @@ import java.util.stream.Stream;
 interface MatchMapper {
 
     MatchMapper INSTANCE = Mappers.getMapper(MatchMapper.class);
-//
-//    MatchResponse toMatchResponse(Match match);
-
-//    MatchPlayer toMatchPlayer(Player player, MatchStatus status );
 
     MatchDto toMatchDto(Match document);
 

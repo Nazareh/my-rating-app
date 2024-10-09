@@ -23,10 +23,9 @@ class MatchController {
 
     @PostMapping("/csv")
     @IsAdmin
-    List<MatchDto> registerPlayersFromCsv(@RequestPart(value = "file") MultipartFile file) throws IOException {
+    List<MatchDto> uploadMatchFromCsv(@RequestPart(value = "file") MultipartFile file) throws IOException {
         return service.uploadMatchFromCsv(file.getInputStream());
     }
-
 
     @GetMapping
     @IsAdmin
