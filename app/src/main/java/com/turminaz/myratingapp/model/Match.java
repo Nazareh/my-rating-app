@@ -20,12 +20,8 @@ public class Match {
     private String id;
     private Instant startTime;
     private List<MatchPlayer> players;
-    private int set1Team1Score;
-    private int set1Team2Score;
-    private int set2Team1Score;
-    private int set2Team2Score;
-    private int set3Team1Score;
-    private int set3Team2Score;
+    private List<SetScore> scores;
     private MatchStatus status;
-    private String rejectedReason;
+    private String reason;
+
 }

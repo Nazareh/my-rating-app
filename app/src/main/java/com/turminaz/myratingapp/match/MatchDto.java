@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -17,12 +18,8 @@ class MatchDto {
     private String id;
     private LocalDateTime startTime;
     private Set<MatchPlayerDto> players;
-    private int set1Team1Score;
-    private int set1Team2Score;
-    private int set2Team1Score;
-    private int set2Team2Score;
-    private int set3Team1Score;
-    private int set3Team2Score;
+    private List<SetScoreDto> score;
     private MatchStatus status;
-    private String rejectedReason;
+    private String reason;
+
 }

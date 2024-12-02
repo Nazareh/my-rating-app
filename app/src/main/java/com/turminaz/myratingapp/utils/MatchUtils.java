@@ -2,39 +2,46 @@ package com.turminaz.myratingapp.utils;
 
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.Match;
+import com.turminaz.myratingapp.model.SetScore;
+
+import java.util.HashSet;
+import java.util.Optional;
 
 public class MatchUtils {
+    static boolean isSetScoreValid(SetScore setScore) {
+        return setScore.getTeam1() >= 0 &&
+                setScore.getTeam2() >= 0 &&
+                setScore.getTeam1() + setScore.getTeam2() > 0 &&
+                setScore.getTeam1() !=  setScore.getTeam2();
+    }
+    public static Optional<Team> getWinnerTeam(Match match) {
 
-    public static boolean isSetResultValid(int team1Result, int team2Result) {
-        return (team1Result >= 0 && team2Result >= 0)
-                && (team1Result + team2Result > 0);
+         if(match.getScores() == null || match.getScores().isEmpty()) return Optional.empty();
+         Team winner = null;
+
+         for (SetScore score:match.getScores()) {
+             var setWinner = getSetWinner(score);
+
+             if (winner == null) {
+                 winner = setWinner;
+             }
+             else if (winner != setWinner){
+                 winner = null;
+             };
+         }
+
+         return Optional.ofNullable(winner);
 
     }
 
-    public static boolean isMatchResultValid(Match match) {
-        //todo write tests
-        var isFirstSetValid = isSetResultValid(match.getSet1Team1Score(), match.getSet1Team2Score());
-        var isSecondSetValid = isSetResultValid(match.getSet2Team1Score(), match.getSet2Team2Score());
-        var isThirdSetValid = isSetResultValid(match.getSet3Team1Score(), match.getSet3Team2Score());
-
-        if (!isFirstSetValid) return false;
-        if (isSecondSetValid == isThirdSetValid) return true;
-
-        return isSecondSetValid
-                && ((match.getSet1Team1Score() > match.getSet1Team2Score() && match.getSet2Team1Score() > match.getSet2Team2Score())
-                || (match.getSet1Team1Score() < match.getSet1Team2Score() && match.getSet2Team1Score() < match.getSet2Team2Score()));
-
+    static boolean validateDistinctPlayers(Match match) {
+        return new HashSet<>(match.getPlayers()).size() == 4;
     }
 
-    public static Team getWinnerTeam(Match match) {
-        var winnerSet1 = match.getSet1Team1Score() > match.getSet1Team2Score() ? Team.TEAM_1 : Team.TEAM_2;
-
-        if (isSetResultValid(match.getSet2Team1Score(), match.getSet2Team2Score())) {
-            var winnerSet2 = match.getSet2Team1Score() > match.getSet2Team2Score() ? Team.TEAM_1 : Team.TEAM_2;
-            if (winnerSet1 == winnerSet2) return winnerSet1;
-        }
-
-        return match.getSet3Team1Score() > match.getSet3Team2Score() ? Team.TEAM_1 : Team.TEAM_2;
-
+    static Team getSetWinner(SetScore setScore) {
+        return setScore.getTeam1() > setScore.getTeam2()
+               ? Team.TEAM_1
+               :Team.TEAM_2;
     }
+
 }

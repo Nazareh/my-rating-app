@@ -9,6 +9,7 @@ import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
 import com.turminaz.myratingapp.model.Player;
+import com.turminaz.myratingapp.model.SetScore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.jms.annotation.JmsListener;
@@ -36,7 +37,10 @@ public class PlayerService {
     public final Player findByEmailOrCreate(String email) {
         return repository.findByEmail(email)
                 .or(() -> Optional.of(
-                        repository.save(new Player().setEmail(email).setName(email.split("@")[0])))).get();
+                        repository
+                                .save(new Player().setEmail(email)
+                                        .setName(email.contains("@") ? email.split("@")[0] : email))))
+                .get();
     }
 
     public void eraseAllRatings() {
@@ -75,22 +79,23 @@ public class PlayerService {
                 .orElseThrow();
     }
 
-    @JmsListener(destination = Topics.MATCH_CREATED)
-    private void receiveMatchCreated(Match match) {
-        match.getPlayers().stream()
-                .map(matchPlayer -> updatePlayerStats(matchPlayer, match))
-                .forEach(repository::save);
-    }
+//    @JmsListener(destination = Topics.MATCH_CREATED)
+//    private void receiveMatchCreated(Match match) {
+//        match.getPlayers()
+//                .forEach(matchPlayer -> updatePlayerStats(matchPlayer, match));
+//    }
 
-    private Player updatePlayerStats(MatchPlayer matchPlayer, Match match) {
+    public void updatePlayerStats(MatchPlayer matchPlayer, Match match) {
+
         var player = repository.findById(matchPlayer.getId()).orElseThrow();
-        if (getWinnerTeam(match) == matchPlayer.getTeam())
+
+        if (getWinnerTeam(match).orElseThrow() == matchPlayer.getTeam())
             player.setMatchesWon(player.getMatchesWon() + 1);
         else
             player.setMatchesLost(player.getMatchesLost() + 1);
 
-        var team1GamesWon = match.getSet1Team1Score() + match.getSet2Team1Score() + match.getSet3Team1Score();
-        var team2GamesWon = match.getSet1Team2Score() + match.getSet2Team2Score() + match.getSet3Team2Score();
+        int team1GamesWon = match.getScores().stream().map(SetScore::getTeam1).reduce(0,Integer::sum);
+        int team2GamesWon = match.getScores().stream().map(SetScore::getTeam2).reduce(0,Integer::sum);
 
         if (matchPlayer.getTeam() == Team.TEAM_1) {
             player.setGamesWon(player.getGamesWon() + team1GamesWon);
@@ -100,6 +105,11 @@ public class PlayerService {
             player.setGamesLost(player.getGamesLost() + team1GamesWon);
         }
 
-        return player;
+       var savedPlayer =  repository.save(player);
+
+        if (player.getName().contains("Eric")) {
+            System.out.println(savedPlayer);
+        }
+
     }
 }

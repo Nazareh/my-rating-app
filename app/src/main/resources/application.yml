@@ -1,6 +1,12 @@
 spring:
-  jms:
-    pub-sub-domain: true
+#  jms:
+#    template:
+#      priority:
+#      delivery-delay: 1000
+#    pub-sub-domain: true
+#    listener:
+#      max-concurrency: 1
+
   artemis:
     mode: EMBEDDED
   cloud:

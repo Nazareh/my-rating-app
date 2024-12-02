@@ -1,10 +1,7 @@
 package com.turminaz.myratingapp.rating;
 
-import com.turminaz.myratingapp.model.Match;
-import com.turminaz.myratingapp.model.MatchPlayer;
-import com.turminaz.myratingapp.model.Player;
+import com.turminaz.myratingapp.model.*;
 import com.turminaz.myratingapp.player.PlayerRepository;
-import com.turminaz.myratingapp.model.Rating;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.jetbrains.annotations.NotNull;
@@ -27,15 +24,13 @@ public class EloRatingService {
     private static final int K_FACTOR = 40;
 
 
-    @JmsListener(destination = "matchCreated")
+//    @JmsListener(destination = "matchCreated")
     public void calculateRating(Match match) {
         log.info("Calculating {} rating", ratingType);
 
         match.getPlayers().forEach(matchPlayer -> {
             var player = repository.findById(matchPlayer.getId()).orElseThrow();
-            if (matchPlayer.getId().equals("pawel")) {
-                System.out.println("hello me");
-            }
+
             var ratings = player.getRatings();
 
             var lastRatingValue = ratings.isEmpty()
@@ -62,7 +57,7 @@ public class EloRatingService {
                             .reduce(0, Integer::sum), 2);
 
             var winRatio = calculateGameWinRatio(match);
-            var newRatingValue = calculateElo(teamRatingAvg, opponentsRatingAvg, getWinnerTeam(match) == matchPlayer.getTeam(),
+            var newRatingValue = calculateElo(teamRatingAvg, opponentsRatingAvg, getWinnerTeam(match).orElseThrow() == matchPlayer.getTeam(),
                     calculateKFactor(winRatio)) + lastRatingValue;
 
             if (ratings.isEmpty()) {
@@ -79,8 +74,8 @@ public class EloRatingService {
     }
 
     private float calculateGameWinRatio(Match match) {
-        var team1Games = match.getSet1Team1Score() + match.getSet2Team1Score() + match.getSet3Team1Score();
-        var team2Games = match.getSet1Team2Score() + match.getSet2Team2Score() + match.getSet3Team2Score();
+        int team1Games = match.getScores().stream().map(SetScore::getTeam1).reduce(0,Integer::sum);
+        int team2Games = match.getScores().stream().map(SetScore::getTeam2).reduce(0,Integer::sum);
 
         return 1 - (float) Math.min(team1Games, team2Games) / Math.max(team1Games, team2Games) ;
 
