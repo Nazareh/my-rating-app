@@ -3,6 +3,7 @@ steps:
     args:
       - clean
       - build
+      - ./app
       - '--no-daemon'
     entrypoint: gradle
   - name: gcr.io/cloud-builders/docker
