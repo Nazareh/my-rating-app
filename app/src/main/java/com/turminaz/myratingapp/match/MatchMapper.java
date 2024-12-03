@@ -22,9 +22,11 @@ interface MatchMapper {
 
     MatchMapper INSTANCE = Mappers.getMapper(MatchMapper.class);
 
-    MatchDto toMatchDto(Match document);
+    MatchDto toMatchDto(Match match);
 
-    default LocalDateTime toOffsetDateTime(Instant instant) {
+    SetScoreDto toSetScoreDto(SetScore score);
+
+    default LocalDateTime toLocalDateTime(Instant instant) {
         return LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
 

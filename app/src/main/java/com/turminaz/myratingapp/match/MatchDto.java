@@ -18,7 +18,7 @@ class MatchDto {
     private String id;
     private LocalDateTime startTime;
     private Set<MatchPlayerDto> players;
-    private List<SetScoreDto> score;
+    private List<SetScoreDto> scores;
     private MatchStatus status;
     private String reason;
 
