@@ -1,0 +1,34 @@
+steps:
+  - name: 'gradle:8.9-jdk21-alpine'
+    args:
+      - clean
+      - build
+      - '--no-daemon'
+    entrypoint: gradle
+  - name: gcr.io/cloud-builders/docker
+    env:
+      - JAR_FILE=build/libs/*SNAPSHOT.jar
+    args:
+      - build
+      - '-t'
+      - gcr.io/$PROJECT_ID/my-rating-app:$SHORT_SHA
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - gcr.io/$PROJECT_ID/battle-of-races-app:$SHORT_SHA
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - my-rating-app
+      - '--image'
+      - gcr.io/$PROJECT_ID/my-rating-app:$SHORT_SHA
+      - '--region'
+      - australia-southeast1
+      - '--allow-unauthenticated'
+images:
+  - gcr.io/$PROJECT_ID/my-rating-app:$SHORT_SHA
+options:
+  logging: CLOUD_LOGGING_ONLY
