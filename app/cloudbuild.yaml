@@ -1,9 +1,9 @@
 steps:
   - name: 'gradle:8.9-jdk21-alpine'
+    dir: app
     args:
       - clean
       - build
-      - ./app
       - '--no-daemon'
     entrypoint: gradle
   - name: gcr.io/cloud-builders/docker
