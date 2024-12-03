@@ -1,5 +1,6 @@
 package com.turminaz.myratingapp.player;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.netflix.dgs.codegen.generated.types.PlayerResponse;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.turminaz.myratingapp.utils.MatchUtils.getWinnerTeam;
@@ -111,5 +113,15 @@ public class PlayerService {
             System.out.println(savedPlayer);
         }
 
+    }
+
+    public boolean isValidEmail(String email) {
+        final String EMAIL_REGEX = "^(?!\\.)(?!.*\\.\\.)[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
+
+        if (email == null || email.isEmpty()) {
+            return false;
+        }
+        return EMAIL_PATTERN.matcher(email).matches();
     }
 }

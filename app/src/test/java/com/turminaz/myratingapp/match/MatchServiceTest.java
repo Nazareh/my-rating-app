@@ -1,37 +1,37 @@
-//package com.turminaz.myratingapp.match;
-//
-//import com.netflix.dgs.codegen.generated.types.MatchInput;
-//import com.netflix.dgs.codegen.generated.types.MatchStatusEnum;
-//import com.turminaz.myratingapp.config.AuthenticationFacade;
-//import com.turminaz.myratingapp.model.Player;
-//import com.turminaz.myratingapp.player.PlayerService;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.DisplayName;
-//import org.junit.jupiter.api.Nested;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.junit.jupiter.params.ParameterizedTest;
-//import org.junit.jupiter.params.provider.CsvSource;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import reactor.core.publisher.Flux;
-//import reactor.core.publisher.Mono;
-//import uk.co.jemos.podam.api.PodamFactory;
-//import uk.co.jemos.podam.api.PodamFactoryImpl;
-//
-//import java.time.Instant;
-//import java.util.Optional;
-//
-//import static org.assertj.core.api.Assertions.assertThat;
-//import static org.assertj.core.api.Assertions.assertThatThrownBy;
-//import static org.mockito.ArgumentMatchers.any;
-//import static org.mockito.ArgumentMatchers.anyString;
-//import static org.mockito.Mockito.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//class MatchServiceTest {
-//
+package com.turminaz.myratingapp.match;
+
+import com.netflix.dgs.codegen.generated.types.MatchInput;
+import com.netflix.dgs.codegen.generated.types.MatchStatusEnum;
+import com.turminaz.myratingapp.config.AuthenticationFacade;
+import com.turminaz.myratingapp.model.Player;
+import com.turminaz.myratingapp.player.PlayerService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import uk.co.jemos.podam.api.PodamFactory;
+import uk.co.jemos.podam.api.PodamFactoryImpl;
+
+import java.time.Instant;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class MatchServiceTest {
+
 //    @Mock
 //    private MatchRepository repository;
 //    @Mock
@@ -348,6 +348,7 @@
 //        verifyNoInteractions(authenticationFacade);
 //
 //    }
-//
-//
-//}
+
+
+
+}

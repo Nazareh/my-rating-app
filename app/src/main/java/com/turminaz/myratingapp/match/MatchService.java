@@ -1,6 +1,5 @@
 package com.turminaz.myratingapp.match;
 
-import com.opencsv.bean.CsvToBeanBuilder;
 import com.turminaz.myratingapp.Topics;
 import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.model.Match;
@@ -43,7 +42,7 @@ public class MatchService {
     }
 
     MatchDto postMatch(PostMatchDto matchDto) {
-        return processMatches(Stream.of(mapper.toMatch(matchDto)), false).getFirst();
+        return processMatches(Stream.of(mapper.toMatch(matchDto))).getFirst();
     }
 
     List<MatchDto> getAllMatches() {
@@ -53,10 +52,10 @@ public class MatchService {
     }
 
     List<MatchDto> uploadMatchFromCsv(InputStream inputStream) {
-        return processMatches(mapper.toMatchStream(inputStream), true);
+        return processMatches(mapper.toMatchStream(inputStream));
     }
 
-    private List<MatchDto> processMatches(Stream<Match> matchStream, boolean fromCsv) {
+    private List<MatchDto> processMatches(Stream<Match> matchStream) {
         var authenticatedUserUid = authenticationFacade.authenticatedUser();
         var isAdmin = authenticatedUserUid.getCustomClaims().get("admin").equals(true);
 
@@ -65,17 +64,18 @@ public class MatchService {
                 .peek(match -> match.getPlayers()
                         .forEach(matchPlayer -> updateMatchPlayerDetails(
                                 matchPlayer, authenticatedUserUid.getUid(),
-                                () -> fromCsv
+                                () -> playerService.isValidEmail(matchPlayer.getId())
                                         ? playerService.findByEmailOrCreate(matchPlayer.getId())
                                         : playerService.findById(matchPlayer.getId())
                                 )))
                 .peek(match -> updateMatchStatus(match, isAdmin))
                 .map(repository::save)
                 .peek(match -> {
-                    if (match.getStatus() == MatchStatus.APPROVED)
+                    if (match.getStatus() == MatchStatus.APPROVED) {
                         match.getPlayers().forEach(p -> playerService.updatePlayerStats(p, match));
                         eloRatingService.calculateRating(match);
 //                        jmsTemplate.convertAndSend(Topics.MATCH_CREATED, match);
+                    }
                 })
                 .map(mapper::toMatchDto)
                 .toList();
