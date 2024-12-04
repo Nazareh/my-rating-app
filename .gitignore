@@ -44,6 +44,7 @@ out/
 *.ipr
 *.iws
 application-local.yml
+application-cloud.yml
 ##############################
 ## Eclipse
 ##############################
