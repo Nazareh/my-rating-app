@@ -55,28 +55,27 @@ public class MatchService {
     private List<MatchDto> processMatches(Stream<Match> matchStream) {
         var authenticatedUserUid = authenticationFacade.authenticatedUser();
         var isAdmin = authenticatedUserUid.getCustomClaims().get("admin").equals(true);
-
-        return matchStream
-                .sorted(Comparator.comparing(Match::getStartTime))
-                .peek(match -> match.getPlayers()
-                        .forEach(matchPlayer -> updateMatchPlayerDetails(
-                                matchPlayer, authenticatedUserUid.getUid(),
-                                () -> playerService.isValidEmail(matchPlayer.getId())
-                                        ? playerService.findByEmailOrCreate(matchPlayer.getId())
-                                        : playerService.findById(matchPlayer.getId())
-                                )))
-                .peek(match -> updateMatchStatus(match, isAdmin))
-                .map(repository::save)
-                .peek(match -> {
-                    if (match.getStatus() == MatchStatus.APPROVED) {
-                        processApprovedMatch(match);
-                    }
-                })
-                .map(mapper::toMatchDto)
-                .toList();
+            return matchStream
+                    .sorted(Comparator.comparing(Match::getStartTime))
+                    .peek(match -> match.getPlayers()
+                            .forEach(matchPlayer -> updateMatchPlayerDetails(
+                                    matchPlayer, authenticatedUserUid.getUid(),
+                                    () -> playerService.isValidEmail(matchPlayer.getId())
+                                            ? playerService.findByEmailOrCreate(matchPlayer.getId())
+                                            : playerService.findById(matchPlayer.getId())
+                            )))
+                    .peek(match -> updateMatchStatus(match, isAdmin))
+                    .map(repository::save)
+                    .peek(match -> {
+                        if (match.getStatus() == MatchStatus.APPROVED) {
+                            processApprovedMatch(match);
+                        }
+                    })
+                    .map(mapper::toMatchDto)
+                    .toList();
     }
 
-    private void processApprovedMatch(Match match){
+    private void processApprovedMatch(Match match) {
         match.getPlayers().forEach(p -> playerService.updatePlayerStats(p, match));
         eloRatingService.calculateRating(match);
     }
@@ -97,7 +96,7 @@ public class MatchService {
         match.setStatus(MatchStatus.PENDING);
         match.setReason("Pending approval of all players");
 
-        if(match.getStartTime().isAfter(Instant.now())) {
+        if (match.getStartTime().isAfter(Instant.now())) {
             match.setStatus(MatchStatus.INVALID);
             match.setReason("Future matches are not allowed");
         }
@@ -107,7 +106,7 @@ public class MatchService {
             match.setReason("Four distinct players are needed");
         }
 
-        if (getWinnerTeam(match).isEmpty()){
+        if (getWinnerTeam(match).isEmpty()) {
             match.setStatus(MatchStatus.INVALID);
             match.setReason("It was not possible determine a winner team");
         }
@@ -116,17 +115,17 @@ public class MatchService {
                 .stream()
                 .noneMatch(m -> m.getPlayers().stream().map(MatchPlayer::getId).anyMatch(players::contains));
 
-        if(!hasNoFutureMatches){
+        if (!hasNoFutureMatches) {
             match.setStatus(MatchStatus.INVALID);
             match.setReason("Another match already exists for the same time or future");
         }
 
-        if(!hasNoFutureMatches){
+        if (!hasNoFutureMatches) {
             match.setStatus(MatchStatus.INVALID);
             match.setReason("Another match already exists for the same time or future");
         }
 
-        if (match.getStatus().equals(MatchStatus.PENDING) && postedByAdmin){
+        if (match.getStatus().equals(MatchStatus.PENDING) && postedByAdmin) {
             match.setStatus(MatchStatus.APPROVED);
             match.setReason("Match approved automatically");
         }
