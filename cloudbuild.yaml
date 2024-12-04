@@ -30,6 +30,7 @@ steps:
       - '--service-account'
       - ci-982@my-rating-app-auth.iam.gserviceaccount.com
       - '--allow-unauthenticated'
+      - '--cors-allowed-origins'
       - '--update-secrets'
       - SPRING_DATA_MONGODB_URI=projects/$PROJECT_NUMBER/secrets/MONGODB_URI:latest
 images:
