@@ -9,7 +9,6 @@ import com.turminaz.myratingapp.player.PlayerService;
 import com.turminaz.myratingapp.rating.EloRatingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
