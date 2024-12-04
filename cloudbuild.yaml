@@ -31,7 +31,7 @@ steps:
       - ci-982@my-rating-app-auth.iam.gserviceaccount.com
       - '--allow-unauthenticated'
       - '--update-secrets'
-      - SPRING_DATA_MONGODB_URI=projects/$PROJECT_NUMBER/secrets/MONGODB_URI:latest
+      - spring.data.mongodb.uri=projects/$PROJECT_NUMBER/secrets/MONGODB_URI:latest
 images:
   - gcr.io/$PROJECT_ID/my-rating-app:$SHORT_SHA
 options:
