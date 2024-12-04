@@ -15,10 +15,13 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 class SecurityConfig {
     private final FirebaseAuth firebaseAuth;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests((authorize) -> authorize
-                         .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/v3/api-docs*/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();

@@ -4,7 +4,6 @@ import com.turminaz.myratingapp.model.*;
 import com.turminaz.myratingapp.player.PlayerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -22,10 +21,8 @@ public class EloRatingService {
     private static final int INITIAL_RATING = 1500;
     private static final int K_FACTOR = 40;
 
-
-//    @JmsListener(destination = "matchCreated")
     public void calculateRating(Match match) {
-        log.info("Calculating {} rating", ratingType);
+        log.info("Calculating {} rating for players", ratingType, match.getPlayers().stream().map(MatchPlayer::getName));
 
         match.getPlayers().forEach(matchPlayer -> {
             var player = repository.findById(matchPlayer.getId()).orElseThrow();
@@ -80,7 +77,6 @@ public class EloRatingService {
 
     }
 
-    @NotNull
     private Integer getLastRating(Match match, Player p) {
         if (p.getRatings() == null || !p.getRatings().containsKey(ratingType.name()))
             return INITIAL_RATING;
