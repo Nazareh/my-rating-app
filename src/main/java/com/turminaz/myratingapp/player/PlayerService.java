@@ -1,11 +1,9 @@
 package com.turminaz.myratingapp.player;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.netflix.dgs.codegen.generated.types.PlayerResponse;
 import com.opencsv.bean.CsvToBeanBuilder;
-import com.turminaz.myratingapp.Topics;
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
@@ -13,7 +11,6 @@ import com.turminaz.myratingapp.model.Player;
 import com.turminaz.myratingapp.model.SetScore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;

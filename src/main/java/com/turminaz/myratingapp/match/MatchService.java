@@ -1,6 +1,5 @@
 package com.turminaz.myratingapp.match;
 
-import com.turminaz.myratingapp.Topics;
 import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
@@ -34,11 +33,10 @@ public class MatchService {
     private final EloRatingService eloRatingService;
     private final AuthenticationFacade authenticationFacade;
     private final MatchMapper mapper;
-    private final JmsTemplate jmsTemplate;
 
     public void republishedApprovedMatches() {
         repository.findAllByStatus(MatchStatus.APPROVED)
-                .forEach(match -> jmsTemplate.convertAndSend(Topics.MATCH_CREATED, match));
+                .forEach(this::processApprovedMatch);
     }
 
     MatchDto postMatch(PostMatchDto matchDto) {
@@ -72,13 +70,16 @@ public class MatchService {
                 .map(repository::save)
                 .peek(match -> {
                     if (match.getStatus() == MatchStatus.APPROVED) {
-                        match.getPlayers().forEach(p -> playerService.updatePlayerStats(p, match));
-                        eloRatingService.calculateRating(match);
-//                        jmsTemplate.convertAndSend(Topics.MATCH_CREATED, match);
+                        processApprovedMatch(match);
                     }
                 })
                 .map(mapper::toMatchDto)
                 .toList();
+    }
+
+    private void processApprovedMatch(Match match){
+        match.getPlayers().forEach(p -> playerService.updatePlayerStats(p, match));
+        eloRatingService.calculateRating(match);
     }
 
     private void updateMatchPlayerDetails(MatchPlayer matchPlayer, String authenticatedUserUid, Supplier<Player> playerSupplier) {
