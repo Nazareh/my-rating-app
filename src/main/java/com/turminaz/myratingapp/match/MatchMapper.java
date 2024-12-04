@@ -39,7 +39,7 @@ interface MatchMapper {
                         new MatchPlayer().setId(dto.getTeam2Player1()).setTeam(Team.TEAM_2),
                         new MatchPlayer().setId(dto.getTeam2Player2()).setTeam(Team.TEAM_2)))
                 .setScores(dto.getScores().stream().map(
-                        s -> new SetScore(s.team1, s.team2)
+                        s -> new SetScore(s.getTeam1(), s.getTeam2())
                 ).toList());
 
     }
