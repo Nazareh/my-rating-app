@@ -28,7 +28,7 @@ steps:
       - '--region'
       - australia-southeast1
       - '--service-account'
-      - backend@battle-of-races-so9sn4.iam.gserviceaccount.com
+      - ci-982@my-rating-app-auth.iam.gserviceaccount.com
       - '--allow-unauthenticated'
 images:
   - gcr.io/$PROJECT_ID/my-rating-app:$SHORT_SHA
