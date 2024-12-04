@@ -2,7 +2,6 @@ package com.turminaz.myratingapp.player;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
-import com.netflix.dgs.codegen.generated.types.PlayerResponse;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.Match;
@@ -15,7 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -48,14 +50,14 @@ public class PlayerService {
                         repository.save(player.setGamesLost(0).setGamesWon(0).setMatchesWon(0).setMatchesLost(0).setRatings(new HashMap<>())));
     }
 
-    PlayerResponse onboardPlayer(String userUid) throws FirebaseAuthException {
+    private Player onboardPlayer(String userUid) throws FirebaseAuthException {
         var userRecord = firebaseAuth.getUser(userUid);
         var existingPlayer = repository.findByEmail(userRecord.getEmail());
         var savedPlayer = repository.save(existingPlayer.isPresent()
                 ? existingPlayer.get().setUserUid(userUid).setName(userRecord.getDisplayName())
                 : mapper.toPlayer(userRecord)
         );
-        return mapper.toPlayerResponse(savedPlayer);
+        return savedPlayer;
     }
 
     Set<PlayerDto> registerPlayersFromCsv(InputStream inputStream) {

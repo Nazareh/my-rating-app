@@ -1,7 +1,6 @@
 package com.turminaz.myratingapp.match;
 
-import com.netflix.dgs.codegen.generated.types.MatchInput;
-import com.netflix.dgs.codegen.generated.types.MatchStatusEnum;
+
 import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.model.Player;
 import com.turminaz.myratingapp.player.PlayerService;

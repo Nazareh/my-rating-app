@@ -1,11 +1,9 @@
 package com.turminaz.myratingapp.player;
 
 import com.google.firebase.auth.UserRecord;
-import com.netflix.dgs.codegen.generated.types.PlayerResponse;
 import com.turminaz.myratingapp.model.Player;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
@@ -18,7 +16,6 @@ public interface PlayerMapper {
                 .setName(userRecord.getDisplayName())
                 .setEmail(userRecord.getEmail());
     };
-    PlayerResponse toPlayerResponse(Player player);
 
     default Player toPlayer(RegisterPlayerDto registerDto) {
         return new Player()

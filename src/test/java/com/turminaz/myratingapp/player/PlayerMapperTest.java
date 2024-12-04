@@ -12,13 +12,6 @@ class PlayerMapperTest {
     private PodamFactory podamFactory = new PodamFactoryImpl();
 
     @Test
-    void toPlayerResponse() {
-        var player = podamFactory.manufacturePojo(Player.class);
-        var playerResponse = PlayerMapper.INSTANCE.toPlayerResponse(player);
-        assertThat(playerResponse).usingRecursiveComparison().isEqualTo(player);
-    }
-
-    @Test
     void toPlayer() {
         var dto = podamFactory.manufacturePojo(RegisterPlayerDto.class);
 
