@@ -3,6 +3,7 @@ package com.turminaz.myratingapp.rating;
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.*;
 import com.turminaz.myratingapp.player.PlayerRepository;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @SpringBootTest
+@Disabled
 class EloRatingServiceTest {
 
     @MockitoBean

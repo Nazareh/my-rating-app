@@ -57,7 +57,7 @@ public class PlayerService {
 
     List<PlayerDto> getAllPlayers() {
         return repository.findAll().stream().map(mapper::toPlayerDto)
-                .sorted(Comparator.comparing(p -> p.ratings().get(RatingType.ELO).getLast().getValue()))
+                .sorted(Comparator.comparing(p -> p.lastRatings().get(RatingType.ELO).getValue()))
                 .collect(Collectors.toList()).reversed();
 
     }
