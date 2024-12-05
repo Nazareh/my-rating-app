@@ -2,6 +2,7 @@ package com.turminaz.myratingapp.player;
 
 import com.google.firebase.auth.UserRecord;
 import com.turminaz.myratingapp.model.Player;
+import org.bson.types.ObjectId;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
@@ -23,4 +24,10 @@ public interface PlayerMapper {
                 .setEmail(registerDto.getEmail());
     }
     PlayerDto toPlayerDto(Player registerDto);
+
+  default  String objectIdTOString(ObjectId objectId){
+      return objectId.toString();
+  };
+
+
 }

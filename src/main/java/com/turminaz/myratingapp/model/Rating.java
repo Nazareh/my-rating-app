@@ -14,5 +14,5 @@ public class Rating {
     private String type;
     private String matchId;
     private Instant dateTime;
-    private String value;
+    private int value;
 }

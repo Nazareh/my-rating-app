@@ -4,9 +4,11 @@ import com.turminaz.myratingapp.model.*;
 import com.turminaz.myratingapp.player.PlayerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.turminaz.myratingapp.utils.MatchUtils.getWinnerTeam;
 
@@ -22,21 +24,30 @@ public class EloRatingService {
     private static final int K_FACTOR = 40;
 
     public void calculateRating(Match match) {
-        log.info("Calculating {} rating for players", ratingType, match.getPlayers().stream().map(MatchPlayer::getName));
+        log.info("Calculating {} rating for matchId={}", ratingType, match.getId());
+
+        Map<ObjectId, Player> playerMap =
+                repository.findAllById(match.getPlayers().stream().map(MatchPlayer::getId)
+                                .map(ObjectId::new)
+                                .collect(Collectors.toList()))
+                        .stream().collect(Collectors.toMap(Player::getId, player -> player));
 
         match.getPlayers().forEach(matchPlayer -> {
-            var player = repository.findById(matchPlayer.getId()).orElseThrow();
+            log.info("Calculating {} rating for player id={} name={}", ratingType, matchPlayer.getId(), matchPlayer.getName());
+
+            var player = playerMap.get(new ObjectId(matchPlayer.getId()));
 
             var ratings = player.getRatings();
 
             var lastRatingValue = ratings.isEmpty()
                     ? INITIAL_RATING
-                    : Integer.parseInt(ratings.get(ratingType.name()).getLast().getValue());
+                    : ratings.get(ratingType).getLast().getValue();
 
             var partnerRating = match.getPlayers().stream()
                     .filter(it -> it.getTeam().equals(matchPlayer.getTeam()))
                     .map(MatchPlayer::getId)
                     .filter(id -> !id.equals(matchPlayer.getId()))
+                    .map(ObjectId::new)
                     .map(repository::findById)
                     .map(Optional::orElseThrow)
                     .map(p -> getLastRating(match, p))
@@ -47,6 +58,7 @@ public class EloRatingService {
                     match.getPlayers().stream()
                             .filter(it -> it.getTeam() != matchPlayer.getTeam())
                             .map(MatchPlayer::getId)
+                            .map(ObjectId::new)
                             .map(repository::findById)
                             .map(Optional::orElseThrow)
                             .map(p -> getLastRating(match, p))
@@ -57,34 +69,31 @@ public class EloRatingService {
                     calculateKFactor(winRatio)) + lastRatingValue;
 
             if (ratings.isEmpty()) {
-                ratings.put(this.ratingType.name(), new ArrayList<>());
+                ratings.put(this.ratingType, new ArrayList<>());
             }
+            var newRating = new Rating(this.ratingType.name(), match.getId(), match.getStartTime(), newRatingValue);
+            ratings.get(this.ratingType).add(newRating);
+            player.getLastRatings().put(this.ratingType, newRating);
 
-            ratings.get(this.ratingType.name()).add(new Rating(this.ratingType.name(), match.getId(), match.getStartTime(), String.valueOf(newRatingValue)));
-            if (matchPlayer.getId().equals("pawel")) {
-                System.out.println("hello me");
-            }
-            repository.save(player);
         });
+
+        repository.saveAll(playerMap.values());
 
     }
 
     private float calculateGameWinRatio(Match match) {
-        int team1Games = match.getScores().stream().map(SetScore::getTeam1).reduce(0,Integer::sum);
-        int team2Games = match.getScores().stream().map(SetScore::getTeam2).reduce(0,Integer::sum);
+        int team1Games = match.getScores().stream().map(SetScore::getTeam1).reduce(0, Integer::sum);
+        int team2Games = match.getScores().stream().map(SetScore::getTeam2).reduce(0, Integer::sum);
 
-        return 1 - (float) Math.min(team1Games, team2Games) / Math.max(team1Games, team2Games) ;
+        return 1 - (float) Math.min(team1Games, team2Games) / Math.max(team1Games, team2Games);
 
     }
 
     private Integer getLastRating(Match match, Player p) {
-        if (p.getRatings() == null || !p.getRatings().containsKey(ratingType.name()))
-            return INITIAL_RATING;
-        var filteredRatings = p.getRatings().get(ratingType.name()).stream()
-                .filter(rating -> !rating.getMatchId().equals(match.getId())).toList();
-        return filteredRatings.isEmpty()
-                ? INITIAL_RATING
-                : Integer.parseInt(filteredRatings.getLast().getValue());
+
+        return p.getRatings() != null && p.getLastRatings().containsKey(ratingType)
+                ? p.getLastRatings().get(ratingType).getValue()
+                : INITIAL_RATING;
     }
 
     private int calculateElo(int playerRating, int opponentRating, boolean hasPlayerWon, int kFactor) {

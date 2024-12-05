@@ -4,20 +4,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.turminaz.myratingapp.match.Team;
-import com.turminaz.myratingapp.model.Match;
-import com.turminaz.myratingapp.model.MatchPlayer;
-import com.turminaz.myratingapp.model.Player;
-import com.turminaz.myratingapp.model.SetScore;
+import com.turminaz.myratingapp.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -32,7 +27,7 @@ public class PlayerService {
     private final PlayerMapper mapper;
 
     public final Player findById(String id) {
-        return repository.findById(id).orElseThrow();
+        return repository.findById(new ObjectId(id)).orElseThrow();
     }
 
     public final Player findByEmailOrCreate(String email) {
@@ -50,16 +45,6 @@ public class PlayerService {
                         repository.save(player.setGamesLost(0).setGamesWon(0).setMatchesWon(0).setMatchesLost(0).setRatings(new HashMap<>())));
     }
 
-    private Player onboardPlayer(String userUid) throws FirebaseAuthException {
-        var userRecord = firebaseAuth.getUser(userUid);
-        var existingPlayer = repository.findByEmail(userRecord.getEmail());
-        var savedPlayer = repository.save(existingPlayer.isPresent()
-                ? existingPlayer.get().setUserUid(userUid).setName(userRecord.getDisplayName())
-                : mapper.toPlayer(userRecord)
-        );
-        return savedPlayer;
-    }
-
     Set<PlayerDto> registerPlayersFromCsv(InputStream inputStream) {
         return new CsvToBeanBuilder<RegisterPlayerDto>(new InputStreamReader(inputStream))
                 .withType(RegisterPlayerDto.class)
@@ -71,32 +56,27 @@ public class PlayerService {
     }
 
     List<PlayerDto> getAllPlayers() {
-        return repository.findAll().stream().map(mapper::toPlayerDto).collect(Collectors.toList());
+        return repository.findAll().stream().map(mapper::toPlayerDto)
+                .sorted(Comparator.comparing(p -> p.ratings().get(RatingType.ELO).getLast().getValue()))
+                .collect(Collectors.toList()).reversed();
+
     }
 
     PlayerDto getPlayerById(String id) {
-        return repository.findById(id)
-                .map(mapper::toPlayerDto)
-                .orElseThrow();
+        return mapper.toPlayerDto(findById(id));
     }
-
-//    @JmsListener(destination = Topics.MATCH_CREATED)
-//    private void receiveMatchCreated(Match match) {
-//        match.getPlayers()
-//                .forEach(matchPlayer -> updatePlayerStats(matchPlayer, match));
-//    }
 
     public void updatePlayerStats(MatchPlayer matchPlayer, Match match) {
 
-        var player = repository.findById(matchPlayer.getId()).orElseThrow();
+        var player = findById(matchPlayer.getId());
 
         if (getWinnerTeam(match).orElseThrow() == matchPlayer.getTeam())
             player.setMatchesWon(player.getMatchesWon() + 1);
         else
             player.setMatchesLost(player.getMatchesLost() + 1);
 
-        int team1GamesWon = match.getScores().stream().map(SetScore::getTeam1).reduce(0,Integer::sum);
-        int team2GamesWon = match.getScores().stream().map(SetScore::getTeam2).reduce(0,Integer::sum);
+        int team1GamesWon = match.getScores().stream().map(SetScore::getTeam1).reduce(0, Integer::sum);
+        int team2GamesWon = match.getScores().stream().map(SetScore::getTeam2).reduce(0, Integer::sum);
 
         if (matchPlayer.getTeam() == Team.TEAM_1) {
             player.setGamesWon(player.getGamesWon() + team1GamesWon);
@@ -106,7 +86,7 @@ public class PlayerService {
             player.setGamesLost(player.getGamesLost() + team1GamesWon);
         }
 
-       var savedPlayer =  repository.save(player);
+        var savedPlayer = repository.save(player);
 
         if (player.getName().contains("Eric")) {
             System.out.println(savedPlayer);

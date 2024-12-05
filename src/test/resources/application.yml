@@ -7,10 +7,10 @@ spring:
       firestore:
         emulator:
           enabled: true
-  data:
-    mongodb:
-      database: my-rating-app
-      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017}
+#  data:
+#    mongodb:
+#      database: my-rating-app
+#      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017}
   security:
 de:
   flapdoodle:

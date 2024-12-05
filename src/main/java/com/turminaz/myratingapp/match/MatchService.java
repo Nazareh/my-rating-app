@@ -82,7 +82,7 @@ public class MatchService {
 
     private void updateMatchPlayerDetails(MatchPlayer matchPlayer, String authenticatedUserUid, Supplier<Player> playerSupplier) {
         var player = playerSupplier.get();
-        matchPlayer.setId(player.getId());
+        matchPlayer.setId(player.getId().toString());
         matchPlayer.setName(player.getName());
         matchPlayer.setStatus(
                 player.getUserUid() != null && player.getUserUid().equals(authenticatedUserUid)
