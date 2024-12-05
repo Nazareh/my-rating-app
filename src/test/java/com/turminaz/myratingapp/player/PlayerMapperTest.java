@@ -18,7 +18,7 @@ class PlayerMapperTest {
         var entity = PlayerMapper.INSTANCE.toPlayer(dto);
 
         assertThat(entity).usingRecursiveComparison()
-                .ignoringFields("id", "gamesLost", "matchesWon", "matchesLost", "ratings", "userUid", "gamesWon")
+                .ignoringFields("id", "gamesLost", "matchesWon", "matchesLost", "ratings", "lastRatings", "userUid", "gamesWon")
                 .isEqualTo(dto);
 
         assertThat(entity.getId()).isNull();
@@ -33,6 +33,12 @@ class PlayerMapperTest {
     @Test
     void toPlayerDto() {
         var entity = podamFactory.manufacturePojo(Player.class);
-        assertThat(PlayerMapper.INSTANCE.toPlayerDto(entity)).usingRecursiveComparison().isEqualTo(entity);
+
+        var dto = PlayerMapper.INSTANCE.toPlayerDto(entity);
+        assertThat(dto).usingRecursiveComparison()
+                .ignoringFields("userUid", "id")
+                .isEqualTo(entity);
+
+        assertThat(dto.id()).isEqualTo(entity.getId().toString());
     }
 }
