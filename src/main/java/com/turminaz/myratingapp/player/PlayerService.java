@@ -1,7 +1,6 @@
 package com.turminaz.myratingapp.player;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.*;
@@ -25,6 +24,9 @@ public class PlayerService {
     private final PlayerRepository repository;
     private final FirebaseAuth firebaseAuth;
     private final PlayerMapper mapper;
+
+    private Map<String, PlayerDto> playersCache = new HashMap<>();
+
 
     public final Player findById(String id) {
         return repository.findById(new ObjectId(id)).orElseThrow();
@@ -56,10 +58,17 @@ public class PlayerService {
     }
 
     List<PlayerDto> getAllPlayers() {
-        return repository.findAll().stream().map(mapper::toPlayerDto)
-                .sorted(Comparator.comparing(p -> p.lastRatings().get(RatingType.ELO).getValue()))
-                .collect(Collectors.toList()).reversed();
+        if (playersCache.isEmpty()) {
+            playersCache = repository.findAll().stream()
+                    .map(mapper::toPlayerDto)
+                    .collect(Collectors.toMap(PlayerDto::id, p -> p));
+        }
 
+        return playersCache.values().stream()
+                .sorted(Comparator.comparing(
+                        p -> p.lastRatings().get(RatingType.ELO).getValue(),
+                        Comparator.reverseOrder()))
+                .collect(Collectors.toList());
     }
 
     PlayerDto getPlayerById(String id) {
@@ -67,6 +76,7 @@ public class PlayerService {
     }
 
     public void updatePlayerStats(MatchPlayer matchPlayer, Match match) {
+        playersCache.clear();
 
         var player = findById(matchPlayer.getId());
 
