@@ -72,7 +72,10 @@ public class PlayerService {
     }
 
     PlayerDto getPlayerById(String id) {
-        return mapper.toPlayerDto(findById(id));
+        if (!playersCache.containsKey(id)) {
+            playersCache.put(id, mapper.toPlayerDto(findById(id)));
+        }
+        return playersCache.get(id);
     }
 
     public void updatePlayerStats(MatchPlayer matchPlayer, Match match) {
