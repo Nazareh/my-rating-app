@@ -1,7 +1,9 @@
 package com.turminaz.myratingapp.player;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.opencsv.bean.CsvToBeanBuilder;
+import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.*;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +65,6 @@ public class PlayerService {
                     .map(mapper::toPlayerDto)
                     .collect(Collectors.toMap(PlayerDto::id, p -> p));
         }
-
         return playersCache.values().stream()
                 .sorted(Comparator.comparing(
                         p -> p.lastRatings().get(RatingType.ELO).getValue(),
@@ -112,5 +113,17 @@ public class PlayerService {
             return false;
         }
         return EMAIL_PATTERN.matcher(email).matches();
+    }
+
+    PlayerDto onboardPlayer(String userUid) throws FirebaseAuthException {
+        playersCache.clear();
+        var userRecord = firebaseAuth.getUser(userUid);
+        var existingPlayer = repository.findByEmail(userRecord.getEmail());
+        return mapper.toPlayerDto(
+                repository.save(
+                existingPlayer.isPresent()
+                        ? existingPlayer.get().setUserUid(userUid).setName(userRecord.getDisplayName())
+                        : mapper.toPlayer(userRecord)
+        ));
     }
 }
