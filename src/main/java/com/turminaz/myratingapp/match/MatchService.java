@@ -52,6 +52,43 @@ public class MatchService {
         return processMatches(mapper.toMatchStream(inputStream));
     }
 
+    MatchDto approve(String matchId) {
+        return updateMatchStatus(matchId, MatchStatus.APPROVED);
+    }
+
+    MatchDto reject(String matchId) {
+        return updateMatchStatus(matchId, MatchStatus.REJECTED);
+    }
+
+    private MatchDto updateMatchStatus(String matchId, MatchStatus newStatus) {
+        var match = repository.findById(matchId).orElseThrow();
+        var players = match.getPlayers();
+        var isAdmin = authenticationFacade.isAdmin();
+        var playerId = playerService.findByUserUid(authenticationFacade.getUserUid()).getId().toString();
+
+        if (!isAdmin && players.stream().map(MatchPlayer::getId).noneMatch(id -> id.equals(playerId))) {
+            throw new RuntimeException("Player did not played was not part of the given game");
+        }
+
+        players.stream().filter(matchPlayer -> matchPlayer.getId().equals(playerId)).forEach(
+                matchPlayer -> matchPlayer.setStatus(newStatus)
+        );
+
+        if (match.getStatus().equals(MatchStatus.PENDING) &&
+                players.stream().map(MatchPlayer::getStatus).allMatch(status -> status.equals(MatchStatus.APPROVED))) {
+            match.setStatus(MatchStatus.APPROVED);
+        } else if (players.stream().map(MatchPlayer::getStatus).anyMatch(status -> status.equals(MatchStatus.REJECTED))) {
+            match.setStatus(MatchStatus.REJECTED);
+        }
+
+        if (isAdmin){
+            match.setStatus(newStatus);
+        }
+
+        return mapper.toMatchDto(repository.save(match));
+
+    }
+
     private List<MatchDto> processMatches(Stream<Match> matchStream) {
         var isAdmin = authenticationFacade.isAdmin();
 

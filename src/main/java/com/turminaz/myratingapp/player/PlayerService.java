@@ -30,8 +30,12 @@ public class PlayerService {
     private Map<String, PlayerDto> playersCache = new HashMap<>();
 
 
-    public final Player findById(String id) {
+    public Player findById(String id) {
         return repository.findById(new ObjectId(id)).orElseThrow();
+    }
+
+    public Player findByUserUid(String userUid) {
+        return repository.findByUserUid(userUid).orElseThrow();
     }
 
     public final Player findByEmailOrCreate(String email) {

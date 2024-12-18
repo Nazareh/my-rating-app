@@ -32,4 +32,14 @@ class MatchController {
     List<MatchDto> getAllMatches() {
         return service.getAllMatches();
     }
+
+    @PostMapping("{matchId}/approve")
+    MatchDto approveMatch(@PathVariable String matchId)  {
+        return service.approve(matchId);
+    }
+
+    @PostMapping("{matchId}/reject")
+    MatchDto rejectMatch(@PathVariable String matchId)  {
+        return service.reject(matchId);
+    }
 }

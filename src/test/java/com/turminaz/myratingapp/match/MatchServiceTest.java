@@ -3,6 +3,7 @@ package com.turminaz.myratingapp.match;
 
 import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.model.Match;
+import com.turminaz.myratingapp.model.MatchPlayer;
 import com.turminaz.myratingapp.model.MatchStatus;
 import com.turminaz.myratingapp.model.Player;
 import com.turminaz.myratingapp.player.PlayerService;
@@ -19,10 +20,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -55,11 +58,12 @@ class MatchServiceTest {
         sut = new MatchService(repository, playerService, eloRatingService, authenticationFacade, MatchMapper.INSTANCE);
         postMatchDto = new PostMatchDto();
         postMatchDto.setStartTime(LocalDateTime.now().minusDays(1));
-        postMatchDto.setScores(List.of(new SetScoreDto(5,7), new SetScoreDto(5,7)));
+        postMatchDto.setScores(List.of(new SetScoreDto(5, 7), new SetScoreDto(5, 7)));
         postMatchDto.setTeam1Player1(p1t1);
         postMatchDto.setTeam1Player2(p1t2);
         postMatchDto.setTeam2Player1(p2t1);
         postMatchDto.setTeam2Player2(p2t2);
+
     }
 
     @Test
@@ -68,8 +72,6 @@ class MatchServiceTest {
         //given
         when(authenticationFacade.isAdmin()).thenReturn(false);
         when(authenticationFacade.getUserUid()).thenReturn(postMatchDto.getTeam1Player1());
-
-
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
         when(repository.findAllByStartTimeGreaterThan(any(Instant.class))).then(i -> emptyList());
         when(playerService.findById(anyString())).thenAnswer(i -> new Player()
@@ -94,9 +96,6 @@ class MatchServiceTest {
         assertThat(result.getPlayers().stream().map(MatchPlayerDto::getStatus).collect(Collectors.toList())).containsExactlyInAnyOrder(
                 MatchStatus.APPROVED, MatchStatus.PENDING, MatchStatus.PENDING, MatchStatus.PENDING);
 
-        assertThat(result.getPlayers().stream().map(MatchPlayerDto::getStatus).collect(Collectors.toList())).containsExactlyInAnyOrder(
-                MatchStatus.APPROVED, MatchStatus.PENDING, MatchStatus.PENDING, MatchStatus.PENDING);
-
         assertThat(result.getScores()).usingRecursiveComparison().isEqualTo(result.getScores());
 
         verify(repository).save(any(Match.class));
@@ -107,6 +106,218 @@ class MatchServiceTest {
 
     }
 
+    @Test
+    void approveMatch() {
+
+        //given
+        var matchId = new ObjectId().toString();
+        when(repository.findById(anyString())).thenReturn(Optional.of(new Match()
+                .setId(matchId)
+                .setStartTime(Instant.now())
+                .setStatus(MatchStatus.PENDING)
+                .setPlayers(List.of(
+                        new MatchPlayer().setId(p1t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
+                        new MatchPlayer().setId(p2t1).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_1),
+                        new MatchPlayer().setId(p1t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2),
+                        new MatchPlayer().setId(p2t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2)
+                ))
+        ));
+        when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
+        when(authenticationFacade.getUserUid()).thenReturn(p1t2);
+        when(playerService.findByUserUid(anyString())).thenReturn(new Player()
+                .setId(new ObjectId(p1t2))
+                .setUserUid(p1t2)
+        );
+
+        //when
+        var matchDto = sut.approve(matchId);
+        var players = matchDto.getPlayers();
+
+        //then
+        assertThat(matchDto.getStatus()).isEqualTo(MatchStatus.PENDING);
+        assertThat(players.stream().map(MatchPlayerDto::getStatus).collect(Collectors.toList())).containsExactlyInAnyOrder(
+                MatchStatus.APPROVED, MatchStatus.APPROVED, MatchStatus.PENDING, MatchStatus.PENDING);
+
+        assertThat(players.stream().filter(matchPlayerDto -> matchPlayerDto.getId().equals(p1t2))
+                .toList().getFirst().getStatus()).isEqualTo(MatchStatus.APPROVED);
+
+        verify(repository).findById(anyString());
+        verify(repository).save(any(Match.class));
+        verify(playerService).findByUserUid(p1t2);
+        verify(authenticationFacade).isAdmin();
+        verify(authenticationFacade).getUserUid();
+
+
+    }
+
+    @Test
+    @DisplayName("Should not change match status when the match was previously rejected")
+    void approveRejectedMatch() {
+
+        //given
+        var matchId = new ObjectId().toString();
+        when(repository.findById(anyString())).thenReturn(Optional.of(new Match()
+                .setId(matchId)
+                .setStartTime(Instant.now())
+                .setStatus(MatchStatus.REJECTED)
+                .setPlayers(List.of(
+                        new MatchPlayer().setId(p1t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
+                        new MatchPlayer().setId(p2t1).setStatus(MatchStatus.REJECTED).setTeam(Team.TEAM_1),
+                        new MatchPlayer().setId(p1t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2),
+                        new MatchPlayer().setId(p2t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2)
+                ))
+        ));
+        when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
+        when(authenticationFacade.getUserUid()).thenReturn(p1t2);
+        when(playerService.findByUserUid(anyString())).thenReturn(new Player()
+                .setId(new ObjectId(p1t2))
+                .setUserUid(p1t2)
+        );
+
+        //when
+        var matchDto = sut.approve(matchId);
+
+        //then
+        var players = matchDto.getPlayers();
+        assertThat(matchDto.getStatus()).isEqualTo(MatchStatus.REJECTED);
+        assertThat(players.stream().map(MatchPlayerDto::getStatus).collect(Collectors.toList())).containsExactlyInAnyOrder(
+                MatchStatus.APPROVED, MatchStatus.APPROVED, MatchStatus.REJECTED, MatchStatus.PENDING);
+
+        assertThat(players.stream().filter(matchPlayerDto -> matchPlayerDto.getId().equals(p1t2))
+                .toList().getFirst().getStatus()).isEqualTo(MatchStatus.APPROVED);
+
+        verify(repository).findById(anyString());
+        verify(repository).save(any(Match.class));
+        verify(playerService).findByUserUid(p1t2);
+        verify(authenticationFacade).isAdmin();
+        verify(authenticationFacade).getUserUid();
+
+    }
+
+    @Test
+    void rejectMatch() {
+        //given
+        var matchId = new ObjectId().toString();
+        when(repository.findById(anyString())).thenReturn(Optional.of(new Match()
+                .setId(matchId)
+                .setStartTime(Instant.now())
+                .setStatus(MatchStatus.PENDING)
+                .setPlayers(List.of(
+                        new MatchPlayer().setId(p1t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
+                        new MatchPlayer().setId(p2t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
+                        new MatchPlayer().setId(p1t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2),
+                        new MatchPlayer().setId(p2t2).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_2)
+                ))
+        ));
+
+        when(authenticationFacade.getUserUid()).thenReturn(p1t2);
+        when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
+        when(playerService.findByUserUid(anyString())).thenReturn(new Player()
+                .setId(new ObjectId(p1t2))
+                .setUserUid(p1t2)
+        );
+
+
+        //when
+        var matchDto = sut.reject(matchId);
+
+        //then
+        var players = matchDto.getPlayers();
+        assertThat(matchDto.getStatus()).isEqualTo(MatchStatus.REJECTED);
+        assertThat(players.stream().map(MatchPlayerDto::getStatus).collect(Collectors.toList())).containsExactlyInAnyOrder(
+                MatchStatus.APPROVED, MatchStatus.APPROVED, MatchStatus.REJECTED, MatchStatus.APPROVED);
+
+        assertThat(players.stream().filter(matchPlayerDto -> matchPlayerDto.getId().equals(p1t2))
+                .toList().getFirst().getStatus()).isEqualTo(MatchStatus.REJECTED);
+
+        verify(repository).findById(anyString());
+        verify(repository).save(any(Match.class));
+        verify(playerService).findByUserUid(p1t2);
+        verify(authenticationFacade).isAdmin();
+        verify(authenticationFacade).getUserUid();
+
+    }
+    @Test
+    @DisplayName("Should throw error when player not on match")
+    void throwErrorIfPlayerNotOnMatch() {
+        //given
+        var matchId = new ObjectId().toString();
+        when(repository.findById(anyString())).thenReturn(Optional.of(new Match()
+                .setId(matchId)
+                .setStartTime(Instant.now())
+                .setStatus(MatchStatus.PENDING)
+                .setPlayers(List.of(
+                        new MatchPlayer().setId(p1t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
+                        new MatchPlayer().setId(p2t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
+                        new MatchPlayer().setId(p1t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2),
+                        new MatchPlayer().setId(p2t2).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_2)
+                ))
+        ));
+
+        var otherPlayerId = new ObjectId().toString();
+        when(authenticationFacade.getUserUid()).thenReturn(otherPlayerId);
+
+        when(playerService.findByUserUid(anyString())).thenReturn(new Player()
+                .setId(new ObjectId(otherPlayerId))
+                .setUserUid(otherPlayerId)
+        );
+
+
+        //then
+        assertThatThrownBy(() -> sut.approve(matchId)).isInstanceOf(RuntimeException.class);
+
+        verify(repository).findById(anyString());
+        verify(repository, times(0)).save(any(Match.class));
+        verify(playerService).findByUserUid(otherPlayerId);
+        verify(authenticationFacade).isAdmin();
+        verify(authenticationFacade).getUserUid();
+
+    }
+
+    @Test
+    @DisplayName("should update match status when is admin")
+    void updateMatchStatusIfIsAdmin() {
+        var matchId = new ObjectId().toString();
+
+        when(authenticationFacade.isAdmin()).thenReturn(true);
+        when(repository.findById(anyString())).thenReturn(Optional.of(new Match()
+                .setId(matchId)
+                .setStartTime(Instant.now())
+                .setStatus(MatchStatus.PENDING)
+                .setPlayers(List.of(
+                        new MatchPlayer().setId(p1t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
+                        new MatchPlayer().setId(p2t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
+                        new MatchPlayer().setId(p1t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2),
+                        new MatchPlayer().setId(p2t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2)
+                ))
+        ));
+
+        when(authenticationFacade.getUserUid()).thenReturn(p1t2);
+        when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
+        when(playerService.findByUserUid(anyString())).thenReturn(new Player()
+                .setId(new ObjectId(p1t2))
+                .setUserUid(p1t2)
+        );
+
+
+        //when
+        var matchDto = sut.approve(matchId);
+
+        //then
+        var players = matchDto.getPlayers();
+        assertThat(matchDto.getStatus()).isEqualTo(MatchStatus.APPROVED);
+        assertThat(players.stream().map(MatchPlayerDto::getStatus).collect(Collectors.toList())).containsExactlyInAnyOrder(
+                MatchStatus.APPROVED, MatchStatus.APPROVED, MatchStatus.APPROVED, MatchStatus.PENDING);
+
+        assertThat(players.stream().filter(matchPlayerDto -> matchPlayerDto.getId().equals(p1t2))
+                .toList().getFirst().getStatus()).isEqualTo(MatchStatus.APPROVED);
+
+        verify(repository).findById(anyString());
+        verify(repository).save(any(Match.class));
+        verify(playerService).findByUserUid(p1t2);
+        verify(authenticationFacade).isAdmin();
+        verify(authenticationFacade).getUserUid();
+    }
 //
 //    @ParameterizedTest
 //    @CsvSource({"APPROVED", "PENDING"})
@@ -365,7 +576,6 @@ class MatchServiceTest {
 //        verifyNoInteractions(authenticationFacade);
 //
 //    }
-
 
 
 }
