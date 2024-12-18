@@ -2,28 +2,27 @@ package com.turminaz.myratingapp.match;
 
 
 import com.turminaz.myratingapp.config.AuthenticationFacade;
+import com.turminaz.myratingapp.model.Match;
+import com.turminaz.myratingapp.model.MatchStatus;
 import com.turminaz.myratingapp.model.Player;
 import com.turminaz.myratingapp.player.PlayerService;
+import com.turminaz.myratingapp.rating.EloRatingService;
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import uk.co.jemos.podam.api.PodamFactory;
-import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 import java.time.Instant;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -31,64 +30,83 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class MatchServiceTest {
 
-//    @Mock
-//    private MatchRepository repository;
-//    @Mock
-//    private PlayerService playerService;
-//
-//    @Mock
-//    private AuthenticationFacade authenticationFacade;
-//
-//    @InjectMocks
-//    private MatchService sut;
-//    private final PodamFactory podamFactory = new PodamFactoryImpl();
-//
-//    private MatchInput input;
-//
-//    @BeforeEach
-//    void setUp() {
-//        sut = new MatchService(repository, playerService, authenticationFacade, MatchMapper.INSTANCE);
-//        input = podamFactory.manufacturePojo(MatchInput.class);
-//
-//    }
-//
-//    @Test
-//    @DisplayName("Should create a match, when a matchInput is received")
-//    void createMatch() {
-//        //given
-//        when(authenticationFacade.authenticatedUserId()).thenReturn(input.getTeam1().getMatchPlayer1());
-//        when(repository.save(any(Match.class))).thenAnswer(i -> Mono.just(i.getArguments()[0]));
-//        when(repository.findAllByStartTime(any(Instant.class))).then(i -> Flux.empty());
-//        when(playerService.findById(anyString())).thenAnswer(i -> Optional.of(new Player().setId((String) i.getArguments()[0])));
-//
-//        //when
-//        var result = sut.createMatch(input);
-//
-//        //then
-//        assertThat(result.getId()).isNotBlank();
-//        assertThat(result.getStartTime()).isEqualTo(input.getStartTime());
-//        assertThat(result.getStatus()).isEqualTo(MatchStatusEnum.PENDING);
-//
-//        assertThat(result.getTeam1().getMatchPlayer1().getId()).isEqualTo(input.getTeam1().getMatchPlayer1());
-//        assertThat(result.getTeam1().getMatchPlayer1().getStatus()).isEqualTo(MatchStatusEnum.APPROVED);
-//
-//        assertThat(result.getTeam1().getMatchPlayer2().getId()).isEqualTo(input.getTeam1().getMatchPlayer2());
-//        assertThat(result.getTeam1().getMatchPlayer2().getStatus()).isEqualTo(MatchStatusEnum.PENDING);
-//
-//        assertThat(result.getTeam2().getMatchPlayer1().getId()).isEqualTo(input.getTeam2().getMatchPlayer1());
-//        assertThat(result.getTeam2().getMatchPlayer1().getStatus()).isEqualTo(MatchStatusEnum.PENDING);
-//
-//        assertThat(result.getTeam2().getMatchPlayer2().getId()).isEqualTo(input.getTeam2().getMatchPlayer2());
-//        assertThat(result.getTeam2().getMatchPlayer2().getStatus()).isEqualTo(MatchStatusEnum.PENDING);
-//
-//        assertThat(result.getSetsPlayed()).usingRecursiveComparison().isEqualTo(input.getSetsPlayed());
-//
-//        verify(repository).save(any(Match.class));
-//        verify(repository).findAllByStartTime(any(Instant.class));
-//        verify(playerService, times(4)).findById(anyString());
-//        verify(authenticationFacade).authenticatedUserId();
-//
-//    }
+    @Mock
+    private MatchRepository repository;
+    @Mock
+    private PlayerService playerService;
+
+    @Mock
+    private EloRatingService eloRatingService;
+
+    @Mock
+    private AuthenticationFacade authenticationFacade;
+
+    @InjectMocks
+    private MatchService sut;
+
+    PostMatchDto postMatchDto;
+    String p1t1 = new ObjectId().toString();
+    String p1t2 = new ObjectId().toString();
+    String p2t1 = new ObjectId().toString();
+    String p2t2 = new ObjectId().toString();
+
+    @BeforeEach
+    void setUp() {
+        sut = new MatchService(repository, playerService, eloRatingService, authenticationFacade, MatchMapper.INSTANCE);
+        postMatchDto = new PostMatchDto();
+        postMatchDto.setStartTime(LocalDateTime.now().minusDays(1));
+        postMatchDto.setScores(List.of(new SetScoreDto(5,7), new SetScoreDto(5,7)));
+        postMatchDto.setTeam1Player1(p1t1);
+        postMatchDto.setTeam1Player2(p1t2);
+        postMatchDto.setTeam2Player1(p2t1);
+        postMatchDto.setTeam2Player2(p2t2);
+    }
+
+    @Test
+    @DisplayName("Should create a PENDING match, when a matchInput is posted by non-admin")
+    void createMatch() {
+        //given
+        when(authenticationFacade.isAdmin()).thenReturn(false);
+        when(authenticationFacade.getUserUid()).thenReturn(postMatchDto.getTeam1Player1());
+
+
+        when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
+        when(repository.findAllByStartTimeGreaterThan(any(Instant.class))).then(i -> emptyList());
+        when(playerService.findById(anyString())).thenAnswer(i -> new Player()
+                .setId(new ObjectId(String.valueOf(i.getArguments()[0])))
+                .setUserUid(String.valueOf(i.getArguments()[0]))
+        );
+
+        //when
+        var result = sut.postMatch(postMatchDto);
+
+        //then
+        assertThat(result.getId()).isNotBlank();
+        assertThat(result.getStartTime()).isEqualTo(postMatchDto.getStartTime());
+        assertThat(result.getStatus()).isEqualTo(MatchStatus.PENDING);
+
+
+        assertThat(result.getPlayers().stream().map(MatchPlayerDto::getId).collect(Collectors.toSet()).contains(postMatchDto.getTeam1Player1())).isTrue();
+        assertThat(result.getPlayers().stream().map(MatchPlayerDto::getId).collect(Collectors.toSet()).contains(postMatchDto.getTeam1Player2())).isTrue();
+        assertThat(result.getPlayers().stream().map(MatchPlayerDto::getId).collect(Collectors.toSet()).contains(postMatchDto.getTeam2Player1())).isTrue();
+        assertThat(result.getPlayers().stream().map(MatchPlayerDto::getId).collect(Collectors.toSet()).contains(postMatchDto.getTeam2Player2())).isTrue();
+
+        assertThat(result.getPlayers().stream().map(MatchPlayerDto::getStatus).collect(Collectors.toList())).containsExactlyInAnyOrder(
+                MatchStatus.APPROVED, MatchStatus.PENDING, MatchStatus.PENDING, MatchStatus.PENDING);
+
+        assertThat(result.getPlayers().stream().map(MatchPlayerDto::getStatus).collect(Collectors.toList())).containsExactlyInAnyOrder(
+                MatchStatus.APPROVED, MatchStatus.PENDING, MatchStatus.PENDING, MatchStatus.PENDING);
+
+        assertThat(result.getScores()).usingRecursiveComparison().isEqualTo(result.getScores());
+
+        verify(repository).save(any(Match.class));
+        verify(repository).findAllByStartTimeGreaterThan(any(Instant.class));
+        verify(playerService, times(4)).findById(anyString());
+        verify(authenticationFacade).isAdmin();
+        verify(authenticationFacade, times(4)).getUserUid();
+
+    }
+
 //
 //    @ParameterizedTest
 //    @CsvSource({"APPROVED", "PENDING"})

@@ -53,26 +53,26 @@ public class MatchService {
     }
 
     private List<MatchDto> processMatches(Stream<Match> matchStream) {
-        var authenticatedUserUid = authenticationFacade.authenticatedUser();
-        var isAdmin = authenticatedUserUid.getCustomClaims().get("admin").equals(true);
-            return matchStream
-                    .sorted(Comparator.comparing(Match::getStartTime))
-                    .peek(match -> match.getPlayers()
-                            .forEach(matchPlayer -> updateMatchPlayerDetails(
-                                    matchPlayer, authenticatedUserUid.getUid(),
-                                    () -> playerService.isValidEmail(matchPlayer.getId())
-                                            ? playerService.findByEmailOrCreate(matchPlayer.getId())
-                                            : playerService.findById(matchPlayer.getId())
-                            )))
-                    .peek(match -> updateMatchStatus(match, isAdmin))
-                    .map(repository::save)
-                    .peek(match -> {
-                        if (match.getStatus() == MatchStatus.APPROVED) {
-                            processApprovedMatch(match);
-                        }
-                    })
-                    .map(mapper::toMatchDto)
-                    .toList();
+        var isAdmin = authenticationFacade.isAdmin();
+
+        return matchStream
+                .sorted(Comparator.comparing(Match::getStartTime))
+                .peek(match -> match.getPlayers()
+                        .forEach(matchPlayer -> updateMatchPlayerDetails(
+                                matchPlayer, authenticationFacade.getUserUid(),
+                                () -> playerService.isValidEmail(matchPlayer.getId())
+                                        ? playerService.findByEmailOrCreate(matchPlayer.getId())
+                                        : playerService.findById(matchPlayer.getId())
+                        )))
+                .peek(match -> updateMatchStatus(match, isAdmin))
+                .map(repository::save)
+                .peek(match -> {
+                    if (match.getStatus() == MatchStatus.APPROVED) {
+                        processApprovedMatch(match);
+                    }
+                })
+                .map(mapper::toMatchDto)
+                .toList();
     }
 
     private void processApprovedMatch(Match match) {
