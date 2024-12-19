@@ -101,11 +101,7 @@ public class PlayerService {
             player.setGamesLost(player.getGamesLost() + team1GamesWon);
         }
 
-        var savedPlayer = repository.save(player);
-
-        if (player.getName().contains("Eric")) {
-            System.out.println(savedPlayer);
-        }
+        repository.save(player);
 
     }
 
