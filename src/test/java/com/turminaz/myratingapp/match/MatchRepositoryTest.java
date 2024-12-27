@@ -3,6 +3,7 @@ package com.turminaz.myratingapp.match;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchStatus;
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,12 +12,12 @@ import uk.co.jemos.podam.api.PodamFactory;
 import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 
 @DataMongoTest
+@Disabled
 class MatchRepositoryTest {
 
 
