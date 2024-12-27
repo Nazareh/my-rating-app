@@ -24,7 +24,7 @@ steps:
       - 'deploy'
       - my-rating-app
       - '--image'
-      - australia-southeast1-docker.pkg.dev/$PROJECT_ID/my-rating-repo/my-rating-app:$SHORT_SHA
+      - australia-southeast1-docker.pkg.dev/$PROJECT_ID/my-rating-app-docker-repo/my-rating-app:$SHORT_SHA
       - '--region'
       - australia-southeast1
       - '--service-account'
@@ -33,6 +33,6 @@ steps:
       - '--update-secrets'
       - SPRING_DATA_MONGODB_URI=projects/$PROJECT_NUMBER/secrets/MONGODB_URI:latest
 images:
-  - australia-southeast1-docker.pkg.dev/$PROJECT_ID/my-rating-repo/my-rating-app:$SHORT_SHA
+  - australia-southeast1-docker.pkg.dev/$PROJECT_ID/my-rating-app-docker-repo/my-rating-app:$SHORT_SHA
 options:
   logging: CLOUD_LOGGING_ONLY
