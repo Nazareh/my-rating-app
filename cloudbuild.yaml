@@ -11,12 +11,12 @@ steps:
     args:
       - build
       - '-t'
-      - australia-southeast1-docker.pkg.dev/$PROJECT_ID/my-rating-repo/my-rating-app:$SHORT_SHA
+      - australia-southeast1-docker.pkg.dev/$PROJECT_ID/my-rating-app-docker-repo/my-rating-app:$SHORT_SHA
       - .
   - name: gcr.io/cloud-builders/docker
     args:
       - push
-      - australia-southeast1-docker.pkg.dev/$PROJECT_ID/my-rating-repo/my-rating-app:$SHORT_SHA
+      - australia-southeast1-docker.pkg.dev/$PROJECT_ID/my-rating-app-docker-repo/my-rating-app:$SHORT_SHA
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
