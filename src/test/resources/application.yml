@@ -17,3 +17,11 @@ de:
     mongodb:
       embedded:
         version: 4.4.0
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          mongodb:
+            core:
+              MongoTemplate: DEBUG

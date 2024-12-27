@@ -1,12 +1,14 @@
 package com.turminaz.myratingapp.match;
 
 import com.turminaz.myratingapp.config.IsAdmin;
+import com.turminaz.myratingapp.model.MatchStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/match")
@@ -28,9 +30,8 @@ class MatchController {
     }
 
     @GetMapping
-    @IsAdmin
-    List<MatchDto> getAllMatches() {
-        return service.getAllMatches();
+    List<MatchDto> getAllMatches(@RequestParam MatchStatus status) {
+        return service.getMatches(status);
     }
 
     @PostMapping("{matchId}/approve")
