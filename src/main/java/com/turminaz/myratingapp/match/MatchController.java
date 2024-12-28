@@ -1,5 +1,6 @@
 package com.turminaz.myratingapp.match;
 
+import com.google.firebase.auth.FirebaseAuthException;
 import com.turminaz.myratingapp.config.IsAdmin;
 import com.turminaz.myratingapp.model.MatchStatus;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,8 @@ class MatchController {
     }
 
     @GetMapping
-    List<MatchDto> getAllMatches(@RequestParam Optional<MatchStatus> status) {
+    List<MatchDto> getAllMatches(@RequestParam Optional<MatchStatus> status) throws FirebaseAuthException {
+
         return service.getMatches(status);
     }
 

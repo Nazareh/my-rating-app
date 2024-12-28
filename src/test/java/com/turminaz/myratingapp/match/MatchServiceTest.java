@@ -124,9 +124,9 @@ class MatchServiceTest {
         ));
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
-        when(playerService.findByUserUid(anyString())).thenReturn(new Player()
+        when(playerService.findByUserUid(anyString())).thenReturn(Optional.ofNullable(new Player()
                 .setId(new ObjectId(p1t2))
-                .setUserUid(p1t2)
+                .setUserUid(p1t2))
         );
 
         //when
@@ -169,9 +169,9 @@ class MatchServiceTest {
         ));
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
-        when(playerService.findByUserUid(anyString())).thenReturn(new Player()
+        when(playerService.findByUserUid(anyString())).thenReturn(Optional.ofNullable(new Player()
                 .setId(new ObjectId(p1t2))
-                .setUserUid(p1t2)
+                .setUserUid(p1t2))
         );
 
         //when
@@ -212,9 +212,9 @@ class MatchServiceTest {
 
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
-        when(playerService.findByUserUid(anyString())).thenReturn(new Player()
+        when(playerService.findByUserUid(anyString())).thenReturn(Optional.ofNullable(new Player()
                 .setId(new ObjectId(p1t2))
-                .setUserUid(p1t2)
+                .setUserUid(p1t2))
         );
 
 
@@ -257,9 +257,9 @@ class MatchServiceTest {
         var otherPlayerId = new ObjectId().toString();
         when(authenticationFacade.getUserUid()).thenReturn(otherPlayerId);
 
-        when(playerService.findByUserUid(anyString())).thenReturn(new Player()
+        when(playerService.findByUserUid(anyString())).thenReturn(Optional.ofNullable(new Player()
                 .setId(new ObjectId(otherPlayerId))
-                .setUserUid(otherPlayerId)
+                .setUserUid(otherPlayerId))
         );
 
 
@@ -294,9 +294,9 @@ class MatchServiceTest {
 
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
-        when(playerService.findByUserUid(anyString())).thenReturn(new Player()
+        when(playerService.findByUserUid(anyString())).thenReturn(Optional.ofNullable(new Player()
                 .setId(new ObjectId(p1t2))
-                .setUserUid(p1t2)
+                .setUserUid(p1t2))
         );
 
 

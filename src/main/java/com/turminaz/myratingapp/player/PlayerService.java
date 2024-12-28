@@ -34,8 +34,8 @@ public class PlayerService {
         return repository.findById(new ObjectId(id)).orElseThrow();
     }
 
-    public Player findByUserUid(String userUid) {
-        return repository.findByUserUid(userUid).orElseThrow();
+    public Optional<Player> findByUserUid(String userUid) {
+        return repository.findByUserUid(userUid);
     }
 
     public final Player findByEmailOrCreate(String email) {
@@ -71,7 +71,9 @@ public class PlayerService {
         }
         return playersCache.values().stream()
                 .sorted(Comparator.comparing(
-                        p -> p.lastRatings().get(RatingType.ELO).getValue(),
+                        p -> p.lastRatings() != null && p.lastRatings().containsKey(RatingType.ELO)
+                                ? p.lastRatings().get(RatingType.ELO).getValue()
+                                : 0,
                         Comparator.reverseOrder()))
                 .collect(Collectors.toList());
     }
@@ -115,7 +117,7 @@ public class PlayerService {
         return EMAIL_PATTERN.matcher(email).matches();
     }
 
-    PlayerDto onboardPlayer(String userUid) throws FirebaseAuthException {
+    public PlayerDto onboardPlayer(String userUid) throws FirebaseAuthException {
         playersCache.clear();
         var userRecord = firebaseAuth.getUser(userUid);
         var existingPlayer = repository.findByEmail(userRecord.getEmail());

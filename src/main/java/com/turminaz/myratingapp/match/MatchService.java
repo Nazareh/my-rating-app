@@ -1,5 +1,6 @@
 package com.turminaz.myratingapp.match;
 
+import com.google.firebase.auth.FirebaseAuthException;
 import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
@@ -9,21 +10,18 @@ import com.turminaz.myratingapp.player.PlayerService;
 import com.turminaz.myratingapp.rating.EloRatingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.turminaz.myratingapp.utils.MatchUtils.getWinnerTeam;
-import static java.util.Objects.requireNonNullElse;
 
 @Service
 @Slf4j
@@ -45,8 +43,14 @@ public class MatchService {
         return processMatches(Stream.of(mapper.toMatch(matchDto))).getFirst();
     }
 
-    List<MatchDto> getMatches(Optional<MatchStatus> status) {
-        var playerId = playerService.findByUserUid(authenticationFacade.getUserUid()).getId();
+    List<MatchDto> getMatches(Optional<MatchStatus> status) throws FirebaseAuthException {
+
+        var userUid = authenticationFacade.getUserUid();
+        var player = playerService.findByUserUid(userUid);
+
+        ObjectId playerId  = player.isEmpty()
+                ? new ObjectId(playerService.onboardPlayer(userUid).id())
+                : player.get().getId();
 
         var matches = repository
                 .findAllByStatusAndPlayersIdIs(
@@ -74,7 +78,7 @@ public class MatchService {
         var match = repository.findById(matchId).orElseThrow();
         var players = match.getPlayers();
         var isAdmin = authenticationFacade.isAdmin();
-        var playerId = playerService.findByUserUid(authenticationFacade.getUserUid()).getId().toString();
+        var playerId = playerService.findByUserUid(authenticationFacade.getUserUid()).orElseThrow().getId().toString();
 
         if (!isAdmin && players.stream().map(MatchPlayer::getId).noneMatch(id -> id.equals(playerId))) {
             throw new RuntimeException("Player did not played was not part of the given game");
