@@ -30,7 +30,7 @@ class MatchController {
     }
 
     @GetMapping
-    List<MatchDto> getAllMatches(@RequestParam MatchStatus status) {
+    List<MatchDto> getAllMatches(@RequestParam Optional<MatchStatus> status) {
         return service.getMatches(status);
     }
 

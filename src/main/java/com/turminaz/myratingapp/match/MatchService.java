@@ -17,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -44,12 +45,12 @@ public class MatchService {
         return processMatches(Stream.of(mapper.toMatch(matchDto))).getFirst();
     }
 
-    List<MatchDto> getMatches(MatchStatus status) {
+    List<MatchDto> getMatches(Optional<MatchStatus> status) {
         var playerId = playerService.findByUserUid(authenticationFacade.getUserUid()).getId();
 
         var matches = repository
                 .findAllByStatusAndPlayersIdIs(
-                        requireNonNullElse(status, MatchStatus.PENDING),
+                        status.orElse(MatchStatus.PENDING),
                         playerId);
 
         return matches.stream()
