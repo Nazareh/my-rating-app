@@ -43,14 +43,10 @@ public class MatchService {
         return processMatches(Stream.of(mapper.toMatch(matchDto))).getFirst();
     }
 
-    List<MatchDto> getMatches(Optional<MatchStatus> status) throws FirebaseAuthException {
+    List<MatchDto> getMatches(Optional<MatchStatus> status)  {
 
         var userUid = authenticationFacade.getUserUid();
-        var player = playerService.findByUserUid(userUid);
-
-        ObjectId playerId  = player.isEmpty()
-                ? new ObjectId(playerService.onboardPlayer(userUid).id())
-                : player.get().getId();
+        var playerId = playerService.findByUserUidOrOnboard(userUid).orElseThrow().getId();
 
         var matches = repository
                 .findAllByStatusAndPlayersIdIs(
@@ -78,7 +74,7 @@ public class MatchService {
         var match = repository.findById(matchId).orElseThrow();
         var players = match.getPlayers();
         var isAdmin = authenticationFacade.isAdmin();
-        var playerId = playerService.findByUserUid(authenticationFacade.getUserUid()).orElseThrow().getId().toString();
+        var playerId = playerService.findByUserUidOrOnboard(authenticationFacade.getUserUid()).orElseThrow().getId().toString();
 
         if (!isAdmin && players.stream().map(MatchPlayer::getId).noneMatch(id -> id.equals(playerId))) {
             throw new RuntimeException("Player did not played was not part of the given game");

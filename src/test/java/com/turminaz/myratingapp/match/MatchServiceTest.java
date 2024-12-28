@@ -124,7 +124,7 @@ class MatchServiceTest {
         ));
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
-        when(playerService.findByUserUid(anyString())).thenReturn(Optional.ofNullable(new Player()
+        when(playerService.findByUserUidOrOnboard(anyString())).thenReturn(Optional.ofNullable(new Player()
                 .setId(new ObjectId(p1t2))
                 .setUserUid(p1t2))
         );
@@ -143,7 +143,7 @@ class MatchServiceTest {
 
         verify(repository).findById(anyString());
         verify(repository).save(any(Match.class));
-        verify(playerService).findByUserUid(p1t2);
+        verify(playerService).findByUserUidOrOnboard(p1t2);
         verify(authenticationFacade).isAdmin();
         verify(authenticationFacade).getUserUid();
 
@@ -169,7 +169,7 @@ class MatchServiceTest {
         ));
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
-        when(playerService.findByUserUid(anyString())).thenReturn(Optional.ofNullable(new Player()
+        when(playerService.findByUserUidOrOnboard(anyString())).thenReturn(Optional.ofNullable(new Player()
                 .setId(new ObjectId(p1t2))
                 .setUserUid(p1t2))
         );
@@ -188,7 +188,7 @@ class MatchServiceTest {
 
         verify(repository).findById(anyString());
         verify(repository).save(any(Match.class));
-        verify(playerService).findByUserUid(p1t2);
+        verify(playerService).findByUserUidOrOnboard(p1t2);
         verify(authenticationFacade).isAdmin();
         verify(authenticationFacade).getUserUid();
 
@@ -212,7 +212,7 @@ class MatchServiceTest {
 
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
-        when(playerService.findByUserUid(anyString())).thenReturn(Optional.ofNullable(new Player()
+        when(playerService.findByUserUidOrOnboard(anyString())).thenReturn(Optional.ofNullable(new Player()
                 .setId(new ObjectId(p1t2))
                 .setUserUid(p1t2))
         );
@@ -232,7 +232,7 @@ class MatchServiceTest {
 
         verify(repository).findById(anyString());
         verify(repository).save(any(Match.class));
-        verify(playerService).findByUserUid(p1t2);
+        verify(playerService).findByUserUidOrOnboard(p1t2);
         verify(authenticationFacade).isAdmin();
         verify(authenticationFacade).getUserUid();
 
@@ -257,7 +257,7 @@ class MatchServiceTest {
         var otherPlayerId = new ObjectId().toString();
         when(authenticationFacade.getUserUid()).thenReturn(otherPlayerId);
 
-        when(playerService.findByUserUid(anyString())).thenReturn(Optional.ofNullable(new Player()
+        when(playerService.findByUserUidOrOnboard(anyString())).thenReturn(Optional.ofNullable(new Player()
                 .setId(new ObjectId(otherPlayerId))
                 .setUserUid(otherPlayerId))
         );
@@ -268,7 +268,7 @@ class MatchServiceTest {
 
         verify(repository).findById(anyString());
         verify(repository, times(0)).save(any(Match.class));
-        verify(playerService).findByUserUid(otherPlayerId);
+        verify(playerService).findByUserUidOrOnboard(otherPlayerId);
         verify(authenticationFacade).isAdmin();
         verify(authenticationFacade).getUserUid();
 
@@ -294,7 +294,7 @@ class MatchServiceTest {
 
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
-        when(playerService.findByUserUid(anyString())).thenReturn(Optional.ofNullable(new Player()
+        when(playerService.findByUserUidOrOnboard(anyString())).thenReturn(Optional.ofNullable(new Player()
                 .setId(new ObjectId(p1t2))
                 .setUserUid(p1t2))
         );
@@ -314,7 +314,7 @@ class MatchServiceTest {
 
         verify(repository).findById(anyString());
         verify(repository).save(any(Match.class));
-        verify(playerService).findByUserUid(p1t2);
+        verify(playerService).findByUserUidOrOnboard(p1t2);
         verify(authenticationFacade).isAdmin();
         verify(authenticationFacade).getUserUid();
     }

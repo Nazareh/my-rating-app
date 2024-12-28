@@ -2,8 +2,8 @@ package com.turminaz.myratingapp.player;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserRecord;
 import com.opencsv.bean.CsvToBeanBuilder;
-import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.*;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +29,18 @@ public class PlayerService {
 
     private Map<String, PlayerDto> playersCache = new HashMap<>();
 
-
     public Player findById(String id) {
         return repository.findById(new ObjectId(id)).orElseThrow();
     }
 
-    public Optional<Player> findByUserUid(String userUid) {
-        return repository.findByUserUid(userUid);
+    public Optional<Player> findByUserUidOrOnboard(String userUid) {
+        var player = repository.findByUserUid(userUid);
+
+        if (player.isEmpty()) {
+            player = Optional.of(createNewPlayerFromUserUid(userUid));
+        }
+
+        return player;
     }
 
     public final Player findByEmailOrCreate(String email) {
@@ -117,15 +122,25 @@ public class PlayerService {
         return EMAIL_PATTERN.matcher(email).matches();
     }
 
-    public PlayerDto onboardPlayer(String userUid) throws FirebaseAuthException {
+
+    PlayerDto onboardPlayer(String userUid) throws FirebaseAuthException {
+        return mapper.toPlayerDto(createNewPlayerFromUserUid(userUid));
+    }
+
+    private Player createNewPlayerFromUserUid(String userUid) {
         playersCache.clear();
-        var userRecord = firebaseAuth.getUser(userUid);
+        UserRecord userRecord = null;
+        try {
+            userRecord = firebaseAuth.getUser(userUid);
+        } catch (FirebaseAuthException ex) {
+            throw new RuntimeException("It not possible to find user with UID " + userUid);
+
+        }
         var existingPlayer = repository.findByEmail(userRecord.getEmail());
-        return mapper.toPlayerDto(
-                repository.save(
+        return repository.save(
                 existingPlayer.isPresent()
                         ? existingPlayer.get().setUserUid(userUid).setName(userRecord.getDisplayName())
                         : mapper.toPlayer(userRecord)
-        ));
+        );
     }
 }

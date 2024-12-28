@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFacade {
@@ -18,7 +20,9 @@ public class AuthenticationFacade {
     public boolean isAdmin() {
         var userId = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
-            return firebaseAuth.getUser(userId).getCustomClaims().get("admin").equals(true);
+            Boolean isAdmin = (Boolean) firebaseAuth.getUser(userId).getCustomClaims().get("admin");
+
+            return isAdmin != null && isAdmin;
 
         } catch (FirebaseAuthException e) {
             throw new RuntimeException(e);
