@@ -122,6 +122,10 @@ public class PlayerService {
         return EMAIL_PATTERN.matcher(email).matches();
     }
 
+    public void addPendingMatchToPlayers(Match match, Set<Player> players) {
+        players.forEach(p -> p.getPendingMatches().add(match));
+        repository.saveAll(players);
+    }
 
     PlayerDto onboardPlayer(String userUid) throws FirebaseAuthException {
         return mapper.toPlayerDto(createNewPlayerFromUserUid(userUid));
@@ -142,5 +146,16 @@ public class PlayerService {
                         ? existingPlayer.get().setUserUid(userUid).setName(userRecord.getDisplayName())
                         : mapper.toPlayer(userRecord)
         );
+    }
+
+    public void removeMatchFromPendingMatches(Match match) {
+        match.getPlayers().stream()
+                .map(MatchPlayer::getId)
+                .map(ObjectId::new)
+                .map(repository::findById)
+                .map(Optional::orElseThrow)
+                .peek(p -> p.getPendingMatches().remove(match))
+                .forEach(repository::save);
+
     }
 }

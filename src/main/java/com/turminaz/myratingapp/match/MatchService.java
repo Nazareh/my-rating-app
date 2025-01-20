@@ -1,6 +1,5 @@
 package com.turminaz.myratingapp.match;
 
-import com.google.firebase.auth.FirebaseAuthException;
 import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
@@ -10,14 +9,12 @@ import com.turminaz.myratingapp.player.PlayerService;
 import com.turminaz.myratingapp.rating.EloRatingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,7 +37,7 @@ public class MatchService {
     }
 
     MatchDto postMatch(PostMatchDto matchDto) {
-        return processMatches(Stream.of(mapper.toMatch(matchDto))).getFirst();
+        return createMatches(Stream.of(mapper.toMatch(matchDto))).getFirst();
     }
 
     List<MatchDto> getMatches(Optional<MatchStatus> status)  {
@@ -59,7 +56,7 @@ public class MatchService {
     }
 
     List<MatchDto> uploadMatchFromCsv(InputStream inputStream) {
-        return processMatches(mapper.toMatchStream(inputStream));
+        return createMatches(mapper.toMatchStream(inputStream));
     }
 
     MatchDto approve(String matchId) {
@@ -80,8 +77,10 @@ public class MatchService {
             throw new RuntimeException("Player did not played was not part of the given game");
         }
 
-        players.stream().filter(matchPlayer -> matchPlayer.getId().equals(playerId)).forEach(
-                matchPlayer -> matchPlayer.setStatus(newStatus)
+        players.stream()
+                .filter(matchPlayer -> matchPlayer.getId().equals(playerId))
+                .filter(matchPlayer -> matchPlayer.getStatus().equals(MatchStatus.PENDING))
+                .forEach(matchPlayer -> matchPlayer.setStatus(newStatus)
         );
 
         if (match.getStatus().equals(MatchStatus.PENDING) &&
@@ -95,28 +94,37 @@ public class MatchService {
             match.setStatus(newStatus);
         }
 
+        if(match.getStatus().equals(MatchStatus.APPROVED)){
+            processApprovedMatch(match);
+        }
+
         return mapper.toMatchDto(repository.save(match));
 
     }
 
-    private List<MatchDto> processMatches(Stream<Match> matchStream) {
+    private List<MatchDto> createMatches(Stream<Match> matchStream) {
         var isAdmin = authenticationFacade.isAdmin();
+        Set<Player> players = new HashSet<>();
 
         return matchStream
                 .sorted(Comparator.comparing(Match::getStartTime))
                 .peek(match -> match.getPlayers()
-                        .forEach(matchPlayer -> updateMatchPlayerDetails(
-                                matchPlayer, authenticationFacade.getUserUid(),
-                                () -> playerService.isValidEmail(matchPlayer.getId())
-                                        ? playerService.findByEmailOrCreate(matchPlayer.getId())
-                                        : playerService.findById(matchPlayer.getId())
-                        )))
+                        .forEach(matchPlayer -> {
+                            var player = playerService.isValidEmail(matchPlayer.getId())
+                                    ? playerService.findByEmailOrCreate(matchPlayer.getId())
+                                    : playerService.findById(matchPlayer.getId());
+
+                             updateMatchPlayerDetails(matchPlayer, authenticationFacade.getUserUid(),player);
+                            players.add(player);
+                        }))
                 .peek(match -> updateMatchStatus(match, isAdmin))
                 .map(repository::save)
                 .peek(match -> {
-                    if (match.getStatus() == MatchStatus.APPROVED) {
+                    if (match.getStatus() == MatchStatus.APPROVED)
                         processApprovedMatch(match);
-                    }
+                    else if (match.getStatus() == MatchStatus.PENDING)
+                        playerService.addPendingMatchToPlayers(match, players);
+
                 })
                 .map(mapper::toMatchDto)
                 .toList();
@@ -125,10 +133,11 @@ public class MatchService {
     private void processApprovedMatch(Match match) {
         match.getPlayers().forEach(p -> playerService.updatePlayerStats(p, match));
         eloRatingService.calculateRating(match);
+        playerService.removeMatchFromPendingMatches(match);
+
     }
 
-    private void updateMatchPlayerDetails(MatchPlayer matchPlayer, String authenticatedUserUid, Supplier<Player> playerSupplier) {
-        var player = playerSupplier.get();
+    private void updateMatchPlayerDetails(MatchPlayer matchPlayer, String authenticatedUserUid, Player player) {
         matchPlayer.setId(player.getId().toString());
         matchPlayer.setName(player.getName());
         matchPlayer.setStatus(

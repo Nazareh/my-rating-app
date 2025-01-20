@@ -9,6 +9,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ public class Player {
     private int matchesLost;
     private int gamesWon;
     private int gamesLost;
+    private List<Match> pendingMatches = new ArrayList<>();
     private Map<RatingType, List<Rating>> ratings = new HashMap<>();
     private Map<RatingType, Rating> lastRatings = new HashMap<>();
 

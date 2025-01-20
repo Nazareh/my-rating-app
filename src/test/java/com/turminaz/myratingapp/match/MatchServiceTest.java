@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.turminaz.myratingapp.match.MatchTestUtils.p1t1;
+import static com.turminaz.myratingapp.match.MatchTestUtils.p1t2;
+import static com.turminaz.myratingapp.match.MatchTestUtils.p2t1;
+import static com.turminaz.myratingapp.match.MatchTestUtils.p2t2;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,11 +51,7 @@ class MatchServiceTest {
     @InjectMocks
     private MatchService sut;
 
-    PostMatchDto postMatchDto;
-    String p1t1 = new ObjectId().toString();
-    String p1t2 = new ObjectId().toString();
-    String p2t1 = new ObjectId().toString();
-    String p2t2 = new ObjectId().toString();
+    private PostMatchDto postMatchDto;
 
     @BeforeEach
     void setUp() {
@@ -110,18 +110,9 @@ class MatchServiceTest {
     void approveMatch() {
 
         //given
-        var matchId = new ObjectId().toString();
-        when(repository.findById(anyString())).thenReturn(Optional.of(new Match()
-                .setId(matchId)
-                .setStartTime(Instant.now())
-                .setStatus(MatchStatus.PENDING)
-                .setPlayers(List.of(
-                        new MatchPlayer().setId(p1t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
-                        new MatchPlayer().setId(p2t1).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_1),
-                        new MatchPlayer().setId(p1t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2),
-                        new MatchPlayer().setId(p2t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2)
-                ))
-        ));
+        var match = MatchTestUtils.createMatch();
+        when(repository.findById(anyString())).thenReturn(Optional.of(
+                match));
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
         when(playerService.findByUserUidOrOnboard(anyString())).thenReturn(Optional.ofNullable(new Player()
@@ -130,7 +121,7 @@ class MatchServiceTest {
         );
 
         //when
-        var matchDto = sut.approve(matchId);
+        var matchDto = sut.approve(match.getId());
         var players = matchDto.getPlayers();
 
         //then
@@ -155,18 +146,11 @@ class MatchServiceTest {
     void approveRejectedMatch() {
 
         //given
-        var matchId = new ObjectId().toString();
-        when(repository.findById(anyString())).thenReturn(Optional.of(new Match()
-                .setId(matchId)
-                .setStartTime(Instant.now())
-                .setStatus(MatchStatus.REJECTED)
-                .setPlayers(List.of(
-                        new MatchPlayer().setId(p1t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
-                        new MatchPlayer().setId(p2t1).setStatus(MatchStatus.REJECTED).setTeam(Team.TEAM_1),
-                        new MatchPlayer().setId(p1t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2),
-                        new MatchPlayer().setId(p2t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2)
-                ))
-        ));
+        var match = MatchTestUtils.createMatch().setStatus(MatchStatus.REJECTED);
+        match.getPlayers().get(1).setStatus(MatchStatus.REJECTED);
+
+        when(repository.findById(anyString())).thenReturn(Optional.of(match));
+
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
         when(playerService.findByUserUidOrOnboard(anyString())).thenReturn(Optional.ofNullable(new Player()
@@ -175,13 +159,13 @@ class MatchServiceTest {
         );
 
         //when
-        var matchDto = sut.approve(matchId);
+        var matchDto = sut.approve(match.getId());
 
         //then
         var players = matchDto.getPlayers();
         assertThat(matchDto.getStatus()).isEqualTo(MatchStatus.REJECTED);
         assertThat(players.stream().map(MatchPlayerDto::getStatus).collect(Collectors.toList())).containsExactlyInAnyOrder(
-                MatchStatus.APPROVED, MatchStatus.APPROVED, MatchStatus.REJECTED, MatchStatus.PENDING);
+                MatchStatus.APPROVED, MatchStatus.REJECTED, MatchStatus.APPROVED, MatchStatus.PENDING);
 
         assertThat(players.stream().filter(matchPlayerDto -> matchPlayerDto.getId().equals(p1t2))
                 .toList().getFirst().getStatus()).isEqualTo(MatchStatus.APPROVED);
@@ -197,18 +181,11 @@ class MatchServiceTest {
     @Test
     void rejectMatch() {
         //given
-        var matchId = new ObjectId().toString();
-        when(repository.findById(anyString())).thenReturn(Optional.of(new Match()
-                .setId(matchId)
-                .setStartTime(Instant.now())
-                .setStatus(MatchStatus.PENDING)
-                .setPlayers(List.of(
-                        new MatchPlayer().setId(p1t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
-                        new MatchPlayer().setId(p2t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
-                        new MatchPlayer().setId(p1t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2),
-                        new MatchPlayer().setId(p2t2).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_2)
-                ))
-        ));
+        var match = MatchTestUtils.createMatch();
+        match.getPlayers().get(1).setStatus(MatchStatus.APPROVED);
+        match.getPlayers().get(3).setStatus(MatchStatus.APPROVED);
+
+        when(repository.findById(anyString())).thenReturn(Optional.of(match));
 
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
@@ -219,7 +196,7 @@ class MatchServiceTest {
 
 
         //when
-        var matchDto = sut.reject(matchId);
+        var matchDto = sut.reject(match.getId());
 
         //then
         var players = matchDto.getPlayers();
@@ -237,22 +214,16 @@ class MatchServiceTest {
         verify(authenticationFacade).getUserUid();
 
     }
+
     @Test
     @DisplayName("Should throw error when player not on match")
     void throwErrorIfPlayerNotOnMatch() {
         //given
-        var matchId = new ObjectId().toString();
-        when(repository.findById(anyString())).thenReturn(Optional.of(new Match()
-                .setId(matchId)
-                .setStartTime(Instant.now())
-                .setStatus(MatchStatus.PENDING)
-                .setPlayers(List.of(
-                        new MatchPlayer().setId(p1t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
-                        new MatchPlayer().setId(p2t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
-                        new MatchPlayer().setId(p1t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2),
-                        new MatchPlayer().setId(p2t2).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_2)
-                ))
-        ));
+        var match = MatchTestUtils.createMatch();
+        match.getPlayers().get(1).setStatus(MatchStatus.APPROVED);
+        match.getPlayers().get(3).setStatus(MatchStatus.APPROVED);
+
+        when(repository.findById(anyString())).thenReturn(Optional.of(match));
 
         var otherPlayerId = new ObjectId().toString();
         when(authenticationFacade.getUserUid()).thenReturn(otherPlayerId);
@@ -264,7 +235,7 @@ class MatchServiceTest {
 
 
         //then
-        assertThatThrownBy(() -> sut.approve(matchId)).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> sut.approve(match.getId())).isInstanceOf(RuntimeException.class);
 
         verify(repository).findById(anyString());
         verify(repository, times(0)).save(any(Match.class));
@@ -277,20 +248,13 @@ class MatchServiceTest {
     @Test
     @DisplayName("should update match status when is admin")
     void updateMatchStatusIfIsAdmin() {
-        var matchId = new ObjectId().toString();
 
         when(authenticationFacade.isAdmin()).thenReturn(true);
-        when(repository.findById(anyString())).thenReturn(Optional.of(new Match()
-                .setId(matchId)
-                .setStartTime(Instant.now())
-                .setStatus(MatchStatus.PENDING)
-                .setPlayers(List.of(
-                        new MatchPlayer().setId(p1t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
-                        new MatchPlayer().setId(p2t1).setStatus(MatchStatus.APPROVED).setTeam(Team.TEAM_1),
-                        new MatchPlayer().setId(p1t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2),
-                        new MatchPlayer().setId(p2t2).setStatus(MatchStatus.PENDING).setTeam(Team.TEAM_2)
-                ))
-        ));
+
+        var match = MatchTestUtils.createMatch();
+        match.getPlayers().get(1).setStatus(MatchStatus.APPROVED);
+
+        when(repository.findById(anyString())).thenReturn(Optional.of(match));
 
         when(authenticationFacade.getUserUid()).thenReturn(p1t2);
         when(repository.save(any(Match.class))).thenAnswer(i -> ((Match) i.getArguments()[0]).setId(new ObjectId().toString()));
@@ -301,7 +265,7 @@ class MatchServiceTest {
 
 
         //when
-        var matchDto = sut.approve(matchId);
+        var matchDto = sut.approve(match.getId());
 
         //then
         var players = matchDto.getPlayers();
