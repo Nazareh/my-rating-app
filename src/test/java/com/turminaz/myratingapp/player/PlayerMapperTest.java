@@ -18,7 +18,7 @@ class PlayerMapperTest {
         var entity = PlayerMapper.INSTANCE.toPlayer(dto);
 
         assertThat(entity).usingRecursiveComparison()
-                .ignoringFields("id", "gamesLost", "matchesWon", "matchesLost", "ratings", "lastRatings", "userUid", "gamesWon")
+                .ignoringFields("id", "gamesLost", "matchesWon", "matchesLost", "ratings", "lastRatings", "userUid", "gamesWon", "pendingMatches")
                 .isEqualTo(dto);
 
         assertThat(entity.getId()).isNull();
