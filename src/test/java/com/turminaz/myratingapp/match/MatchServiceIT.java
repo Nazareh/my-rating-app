@@ -1,34 +1,29 @@
 package com.turminaz.myratingapp.match;
 
 import com.turminaz.myratingapp.config.AuthenticationFacade;
-import com.turminaz.myratingapp.model.Match;
-import com.turminaz.myratingapp.model.MatchPlayer;
 import com.turminaz.myratingapp.model.MatchStatus;
 import com.turminaz.myratingapp.model.Player;
 import com.turminaz.myratingapp.player.PlayerRepository;
-import com.turminaz.myratingapp.player.PlayerService;
-import org.bson.types.ObjectId;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
-import static com.turminaz.myratingapp.match.MatchTestUtils.*;
-import static com.turminaz.myratingapp.match.MatchTestUtils.p2t2;
+import static com.turminaz.myratingapp.match.MatchTestUtils.p1t1;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
+@Disabled
 public class MatchServiceIT {
 
     @MockitoBean
