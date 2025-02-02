@@ -1,6 +1,8 @@
 package com.turminaz.myratingapp.match;
 
+import com.turminaz.myratingapp.playerMatchService.PlayerMatchService;
 import com.turminaz.myratingapp.config.AuthenticationFacade;
+import com.turminaz.myratingapp.dto.MatchDto;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
 import com.turminaz.myratingapp.model.MatchStatus;
@@ -30,6 +32,7 @@ public class MatchService {
     private final EloRatingService eloRatingService;
     private final AuthenticationFacade authenticationFacade;
     private final MatchMapper mapper;
+    private final PlayerMatchService playerMatchService;
 
     public void republishedApprovedMatches() {
         repository.findAllByStatus(MatchStatus.APPROVED)
@@ -45,14 +48,7 @@ public class MatchService {
         var userUid = authenticationFacade.getUserUid();
         var playerId = playerService.findByUserUidOrOnboard(userUid).orElseThrow().getId();
 
-        var matches = repository
-                .findAllByStatusAndPlayersIdIs(
-                        status.orElse(MatchStatus.PENDING),
-                        playerId);
-
-        return matches.stream()
-                .map(mapper::toMatchDto)
-                .collect(Collectors.toList());
+        return playerMatchService.getMatchesByPlayer(playerId, status);
     }
 
     List<MatchDto> uploadMatchFromCsv(InputStream inputStream) {
@@ -122,9 +118,6 @@ public class MatchService {
                 .peek(match -> {
                     if (match.getStatus() == MatchStatus.APPROVED)
                         processApprovedMatch(match);
-                    else if (match.getStatus() == MatchStatus.PENDING)
-                        playerService.addPendingMatchToPlayers(match, players);
-
                 })
                 .map(mapper::toMatchDto)
                 .toList();
@@ -133,8 +126,6 @@ public class MatchService {
     private void processApprovedMatch(Match match) {
         match.getPlayers().forEach(p -> playerService.updatePlayerStats(p, match));
         eloRatingService.calculateRating(match);
-        playerService.removeMatchFromPendingMatches(match);
-
     }
 
     private void updateMatchPlayerDetails(MatchPlayer matchPlayer, String authenticatedUserUid, Player player) {

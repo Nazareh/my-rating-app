@@ -1,9 +1,10 @@
 package com.turminaz.myratingapp.match;
 
 
+import com.turminaz.myratingapp.playerMatchService.PlayerMatchService;
 import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.model.Match;
-import com.turminaz.myratingapp.model.MatchPlayer;
+import com.turminaz.myratingapp.dto.MatchPlayerDto;
 import com.turminaz.myratingapp.model.MatchStatus;
 import com.turminaz.myratingapp.model.Player;
 import com.turminaz.myratingapp.player.PlayerService;
@@ -48,6 +49,9 @@ class MatchServiceTest {
     @Mock
     private AuthenticationFacade authenticationFacade;
 
+    @Mock
+    PlayerMatchService playerMatchService;
+
     @InjectMocks
     private MatchService sut;
 
@@ -55,7 +59,7 @@ class MatchServiceTest {
 
     @BeforeEach
     void setUp() {
-        sut = new MatchService(repository, playerService, eloRatingService, authenticationFacade, MatchMapper.INSTANCE);
+        sut = new MatchService(repository, playerService, eloRatingService, authenticationFacade, MatchMapper.INSTANCE, playerMatchService);
         postMatchDto = new PostMatchDto();
         postMatchDto.setStartTime(LocalDateTime.now().minusDays(1));
         postMatchDto.setScores(List.of(new SetScoreDto(5, 7), new SetScoreDto(5, 7)));

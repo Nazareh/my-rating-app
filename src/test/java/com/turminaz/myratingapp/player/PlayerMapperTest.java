@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 class PlayerMapperTest {
-    private PodamFactory podamFactory = new PodamFactoryImpl();
+    private final PodamFactory podamFactory = new PodamFactoryImpl();
 
     @Test
     void toPlayer() {
@@ -36,7 +36,7 @@ class PlayerMapperTest {
 
         var dto = PlayerMapper.INSTANCE.toPlayerDto(entity);
         assertThat(dto).usingRecursiveComparison()
-                .ignoringFields("userUid", "id")
+                .ignoringFields("userUid", "id", "pendingMatches")
                 .isEqualTo(entity);
 
         assertThat(dto.id()).isEqualTo(entity.getId().toString());

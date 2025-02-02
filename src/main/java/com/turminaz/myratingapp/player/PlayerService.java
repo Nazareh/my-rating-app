@@ -4,6 +4,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import com.opencsv.bean.CsvToBeanBuilder;
+import com.turminaz.myratingapp.config.AuthenticationFacade;
+import com.turminaz.myratingapp.playerMatchService.PlayerMatchService;
 import com.turminaz.myratingapp.match.Team;
 import com.turminaz.myratingapp.model.*;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,8 @@ public class PlayerService {
     private final PlayerRepository repository;
     private final FirebaseAuth firebaseAuth;
     private final PlayerMapper mapper;
+    private final PlayerMatchService playerMatchService;
+    private final AuthenticationFacade authenticationFacade;
 
     private Map<String, PlayerDto> playersCache = new HashMap<>();
 
@@ -84,7 +88,13 @@ public class PlayerService {
     }
 
     PlayerDto getPlayerById(String id) {
-        return mapper.toPlayerDto(findById(id));
+        var player = findById(id);
+
+       return  mapper.toPlayerDto(player,
+               player.getUserUid().equals(authenticationFacade.getUserUid())
+                       ? playerMatchService.getMatchesByPlayer(player.getId(), Optional.of(MatchStatus.PENDING))
+                       : Collections.emptyList());
+
     }
 
     public void updatePlayerStats(MatchPlayer matchPlayer, Match match) {
@@ -122,11 +132,6 @@ public class PlayerService {
         return EMAIL_PATTERN.matcher(email).matches();
     }
 
-    public void addPendingMatchToPlayers(Match match, Set<Player> players) {
-        players.forEach(p -> p.getPendingMatches().add(match));
-        repository.saveAll(players);
-    }
-
     PlayerDto onboardPlayer(String userUid) throws FirebaseAuthException {
         return mapper.toPlayerDto(createNewPlayerFromUserUid(userUid));
     }
@@ -154,7 +159,6 @@ public class PlayerService {
                 .map(ObjectId::new)
                 .map(repository::findById)
                 .map(Optional::orElseThrow)
-                .peek(p -> p.getPendingMatches().remove(match))
                 .forEach(repository::save);
 
     }

@@ -31,7 +31,6 @@ public class Player {
     private int matchesLost;
     private int gamesWon;
     private int gamesLost;
-    private List<Match> pendingMatches = new ArrayList<>();
     private Map<RatingType, List<Rating>> ratings = new HashMap<>();
     private Map<RatingType, Rating> lastRatings = new HashMap<>();
 

@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Repository
-interface MatchRepository extends MongoRepository<Match, String> {
+public interface MatchRepository extends MongoRepository<Match, String> {
     List<Match> findAllByStartTimeGreaterThan(Instant instant);
     List<Match> findAllByStatus(MatchStatus status);
     List<Match> findAllByStatusAndPlayersIdIs(MatchStatus status, ObjectId playerId);

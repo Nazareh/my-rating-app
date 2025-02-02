@@ -1,6 +1,8 @@
 package com.turminaz.myratingapp.player;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.turminaz.myratingapp.config.AuthenticationFacade;
+import com.turminaz.myratingapp.playerMatchService.PlayerMatchService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -18,7 +20,13 @@ class PlayerServiceTest {
     @Mock
     FirebaseAuth firebaseAuth;
 
-    PlayerService sut = new PlayerService(repository, firebaseAuth, PlayerMapper.INSTANCE);
+    @Mock
+    PlayerMatchService playerMatchService;
+
+    @Mock
+    AuthenticationFacade authenticationFacade;
+
+    PlayerService sut = new PlayerService(repository, firebaseAuth, PlayerMapper.INSTANCE, playerMatchService, authenticationFacade);
 
     @Test
     void givenValidEmail_whenIsValidEmail_thenReturnsTrue() {

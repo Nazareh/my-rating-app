@@ -1,6 +1,7 @@
 package com.turminaz.myratingapp.match;
 
 import com.opencsv.bean.CsvToBeanBuilder;
+import com.turminaz.myratingapp.dto.MatchDto;
 import com.turminaz.myratingapp.model.Match;
 import com.turminaz.myratingapp.model.MatchPlayer;
 import com.turminaz.myratingapp.model.SetScore;
@@ -14,11 +15,10 @@ import java.time.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
-interface MatchMapper {
+public interface MatchMapper {
 
     MatchMapper INSTANCE = Mappers.getMapper(MatchMapper.class);
 

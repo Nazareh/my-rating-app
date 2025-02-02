@@ -1,5 +1,6 @@
-package com.turminaz.myratingapp.match;
+package com.turminaz.myratingapp.dto;
 
+import com.turminaz.myratingapp.match.SetScoreDto;
 import com.turminaz.myratingapp.model.MatchStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +15,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-class MatchDto {
+public class MatchDto {
     private String id;
     private LocalDateTime startTime;
     private Set<MatchPlayerDto> players;

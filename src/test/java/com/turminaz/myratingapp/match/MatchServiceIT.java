@@ -2,7 +2,6 @@ package com.turminaz.myratingapp.match;
 
 import com.turminaz.myratingapp.config.AuthenticationFacade;
 import com.turminaz.myratingapp.model.MatchStatus;
-import com.turminaz.myratingapp.model.Player;
 import com.turminaz.myratingapp.player.PlayerRepository;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -64,14 +63,6 @@ public class MatchServiceIT {
         var savedMatch = matchRepository.findAll().stream().findFirst().orElseThrow();
 
         assertThat(savedMatch.getStatus()).isEqualTo(MatchStatus.PENDING);
-
-        for (Player player : playerRepository.findAll()) {
-            assertThat(player.getPendingMatches()).contains(savedMatch);
-        }
-
-        assertThat(playerRepository.findAll()).hasSize(4)
-                .flatExtracting(Player::getPendingMatches)
-                .containsExactly(savedMatch,savedMatch,savedMatch,savedMatch);
     }
 
     @Test
