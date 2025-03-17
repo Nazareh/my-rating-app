@@ -29,7 +29,6 @@ class PlayerController {
         return service.getAllPlayers();
     }
 
-
     @GetMapping("/{id}")
     PlayerDto getPlayer(@PathVariable String id) {
         return service.getPlayerById(id);

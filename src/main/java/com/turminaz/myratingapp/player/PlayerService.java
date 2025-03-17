@@ -91,7 +91,7 @@ public class PlayerService {
         var player = findById(id);
 
        return  mapper.toPlayerDto(player,
-               player.getUserUid().equals(authenticationFacade.getUserUid())
+                player.getUserUid()!= null && player.getUserUid().equals(authenticationFacade.getUserUid())
                        ? playerMatchService.getMatchesByPlayer(player.getId(), Optional.of(MatchStatus.PENDING))
                        : Collections.emptyList());
 
@@ -142,6 +142,8 @@ public class PlayerService {
         try {
             userRecord = firebaseAuth.getUser(userUid);
         } catch (FirebaseAuthException ex) {
+
+            log.error(ex.getMessage());
             throw new RuntimeException("It not possible to find user with UID " + userUid);
 
         }
